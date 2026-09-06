@@ -233,11 +233,72 @@ export const traceLiveWalletAPI = async (rawAddress) => {
   if (addr.startsWith('0x')) {
     const fetchChain = async (chainId) => {
       const balUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=account&action=balance&address=${addr}&tag=latest&apikey=${ETHERSCAN_API_KEY}`;
-      const txUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=account&action=txlist&address=${addr}&startblock=0&endblock=99999999&page=1&offset=15&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
-      const balRes = await fetch(balUrl).then(r => r.json()).catch(() => null);
-      await new Promise(r => setTimeout(r, 220));
-      const txRes = await fetch(txUrl).then(r => r.json()).catch(() => null);
-      return { bal: parseWei(balRes?.result), txs: Array.isArray(txRes?.result) ? txRes.result : [] };
+      const txUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=account&action=txlist&address=${addr}&startblock=0&endblock=99999999&page=1&offset=25&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
+      const tokenTxUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=account&action=tokentx&address=${addr}&startblock=0&endblock=99999999&page=1&offset=50&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
+
+      try {
+        const balRes = await fetch(balUrl).then(r => r.json()).catch(() => null);
+        await new Promise(r => setTimeout(r, 220));
+        const txRes = await fetch(txUrl).then(r => r.json()).catch(() => null);
+        await new Promise(r => setTimeout(r, 220));
+        const tokenTxRes = await fetch(tokenTxUrl).then(r => r.json()).catch(() => null);
+
+        const bal = parseWei(balRes?.result);
+        const rawNativeTxs = Array.isArray(txRes?.result) ? txRes.result : [];
+        const rawTokenTxs = Array.isArray(tokenTxRes?.result) ? tokenTxRes.result : [];
+
+        const normTokenTxs = rawTokenTxs.map(t => {
+          const dec = parseInt(t.tokenDecimal || '6');
+          const rawVal = Number(t.value || '0');
+          const valFloat = rawVal / Math.pow(10, dec);
+          const sym = t.tokenSymbol || 'USDT';
+          const valStr = `${valFloat < 0.01 && valFloat > 0 ? valFloat.toFixed(4) : valFloat.toFixed(2)} ${sym}`;
+          const isStable = sym.toUpperCase().includes('USD') || sym.toUpperCase().includes('DAI');
+          const inrRate = isStable ? 89 : (chainId === 137 ? 38 : 240000);
+          const inrVal = '₹' + Math.round(valFloat * inrRate).toLocaleString('en-IN') + ' INR';
+          return {
+            hash: t.hash,
+            from: t.from,
+            to: t.to,
+            value: t.value,
+            valFloat: valFloat,
+            valStr: valStr,
+            valInr: inrVal,
+            symbol: sym,
+            decimals: dec,
+            timeStamp: t.timeStamp,
+            isToken: true,
+            tokenName: t.tokenName || sym
+          };
+        });
+
+        const normNativeTxs = rawNativeTxs.map(t => {
+          const valFloat = Number(parseWei(t.value)) / 1e18;
+          const sym = chainId === 137 ? 'POL' : 'ETH';
+          const valStr = `${valFloat < 0.0001 && valFloat > 0 ? valFloat.toFixed(6) : valFloat.toFixed(4)} ${sym}`;
+          const inrRate = chainId === 137 ? 38 : 240000;
+          const inrVal = '₹' + Math.round(valFloat * inrRate).toLocaleString('en-IN') + ' INR';
+          return {
+            hash: t.hash,
+            from: t.from,
+            to: t.to,
+            value: t.value,
+            valFloat: valFloat,
+            valStr: valStr,
+            valInr: inrVal,
+            symbol: sym,
+            decimals: 18,
+            timeStamp: t.timeStamp,
+            isToken: false,
+            tokenName: sym
+          };
+        });
+
+        const allTxs = [...normTokenTxs, ...normNativeTxs].sort((a, b) => parseInt(b.timeStamp) - parseInt(a.timeStamp));
+        return { bal, txs: allTxs, tokenTxs: normTokenTxs, nativeTxs: normNativeTxs };
+      } catch (err) {
+        return { bal: 0n, txs: [], tokenTxs: [], nativeTxs: [] };
+      }
     };
 
     let poly = await fetchChain(137);
@@ -262,76 +323,126 @@ export const traceLiveWalletAPI = async (rawAddress) => {
     const balStr = (balFloat < 0.0001 && balFloat > 0 ? balFloat.toFixed(6) : balFloat.toFixed(4)) + ' ' + currency;
     const balInr = '₹' + Math.round(balFloat * inrRate).toLocaleString('en-IN') + ' INR';
 
-    const outgoing = res.txs.filter(t => t.from && t.from.toLowerCase() === addr.toLowerCase() && t.isError === '0');
-    const incoming = res.txs.filter(t => t.to && t.to.toLowerCase() === addr.toLowerCase() && t.isError === '0');
+    const outgoing = res.txs.filter(t => t.from && t.from.toLowerCase() === addr.toLowerCase());
+    const incoming = res.txs.filter(t => t.to && t.to.toLowerCase() === addr.toLowerCase());
 
     if (outgoing.length > 0) {
       const topTx = outgoing[0];
       const dest = topTx.to;
-      const txValFloat = Number(parseWei(topTx.value)) / 1e18;
-      const txValStr = (txValFloat < 0.0001 && txValFloat > 0 ? txValFloat.toFixed(6) : txValFloat.toFixed(4)) + ' ' + currency;
-      const txValInr = '₹' + Math.round(txValFloat * inrRate).toLocaleString('en-IN') + ' INR';
+      const txValStr = topTx.valStr;
+      const txValInr = topTx.valInr;
       const txDate = new Date(parseInt(topTx.timeStamp) * 1000).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
 
       const exch = KNOWN_EXCHANGES[dest.toLowerCase()];
       const isVasp = !!exch;
-      const vaspName = isVasp ? exch.name : 'Unhosted Private Wallet (In-Transit)';
-      const complianceEmail = isVasp ? exch.complianceEmail : 'N/A - Unhosted On-Chain Wallet';
+      const vaspName = isVasp ? exch.name : 'Layer 1 Intermediary Mule (0x' + dest.substring(2, 6) + '...' + dest.substring(dest.length - 4) + ')';
+      const complianceEmail = isVasp ? exch.complianceEmail : 'N/A - Unhosted Mule Node';
+
+      let downstreamStep = null;
+      if (!isVasp) {
+        try {
+          const destCheck = await fetch(`https://api.etherscan.io/v2/api?chainid=${activeChain === 'polygon' ? 137 : 1}&module=account&action=tokentx&address=${dest}&startblock=0&endblock=99999999&page=1&offset=5&sort=desc&apikey=${ETHERSCAN_API_KEY}`).then(r => r.json()).catch(() => null);
+          const destTxs = Array.isArray(destCheck?.result) ? destCheck.result : [];
+          const destOut = destTxs.filter(t => t.from && t.from.toLowerCase() === dest.toLowerCase());
+          if (destOut.length > 0) {
+            const hop2Tx = destOut[0];
+            const hop2Dest = hop2Tx.to;
+            const hop2Exch = KNOWN_EXCHANGES[hop2Dest.toLowerCase()];
+            const isHop2Vasp = !!hop2Exch;
+            const hop2VaspName = isHop2Vasp ? hop2Exch.name : 'Downstream Recipient Node (0x' + hop2Dest.substring(2, 6) + '...' + hop2Dest.substring(hop2Dest.length - 4) + ')';
+            const hop2Dec = parseInt(hop2Tx.tokenDecimal || '6');
+            const hop2ValFloat = Number(hop2Tx.value || '0') / Math.pow(10, hop2Dec);
+            const hop2Sym = hop2Tx.tokenSymbol || 'USDT';
+            const hop2ValStr = `${hop2ValFloat < 0.01 && hop2ValFloat > 0 ? hop2ValFloat.toFixed(4) : hop2ValFloat.toFixed(2)} ${hop2Sym}`;
+            const hop2InrVal = '₹' + Math.round(hop2ValFloat * 89).toLocaleString('en-IN') + ' INR';
+            const hop2Date = new Date(parseInt(hop2Tx.timeStamp) * 1000).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+            downstreamStep = {
+              step: 3,
+              title: isHop2Vasp ? 'Target VASP' : 'Downstream Mule',
+              role: isHop2Vasp ? 'Identified Target VASP' : 'Downstream Endpoint / Mule Layer 2',
+              type: isHop2Vasp ? 'vasp' : 'mule',
+              entity: hop2VaspName,
+              address: hop2Dest,
+              volume: hop2ValStr,
+              inr: hop2InrVal,
+              time: hop2Date,
+              note: isHop2Vasp ? `${hop2VaspName} identified as liquidation target.` : `Secondary transfer tracked downstream on ${chainName}.`,
+              txHash: hop2Tx.hash
+            };
+          }
+        } catch (e) {
+          console.warn('Downstream hop lookup skipped', e);
+        }
+      }
+
+      const steps = [
+        {
+          step: 1,
+          title: 'Victim Origin',
+          role: 'Victim / Originator',
+          type: 'victim',
+          entity: 'Searched Origin Wallet',
+          address: addr,
+          volume: txValStr,
+          inr: txValInr,
+          time: txDate,
+          note: `Direct origin of transfer on ${chainName}. Funds were swept/liquidated (Holding: ${balStr}).`,
+          txHash: topTx.hash
+        },
+        {
+          step: 2,
+          title: isVasp ? 'Identified Target VASP' : 'Layer 1 Mule',
+          role: isVasp ? 'Identified Target VASP' : 'Layer 1 Intermediary Mule',
+          type: isVasp ? 'vasp' : 'mule',
+          entity: vaspName,
+          address: dest,
+          volume: txValStr,
+          inr: txValInr,
+          time: txDate,
+          note: isVasp ? `${vaspName} received transfer. Custodial freeze notice generated.` : `Unhosted private mule address. Received token transfer from origin.`,
+          txHash: topTx.hash
+        }
+      ];
+
+      if (downstreamStep) {
+        steps.push(downstreamStep);
+      }
+
+      const isSwept = balFloat === 0;
+      const targetEntity = isVasp ? vaspName : (downstreamStep && downstreamStep.type === 'vasp' ? downstreamStep.entity : vaspName);
 
       return {
         id: 'live-' + Date.now(),
         isLive: true,
         chain: activeChain,
         chainName: chainName,
-        currency: currency,
-        title: isVasp ? `Live Trace: Funds Deposited into ${vaspName}` : `Live Trace: Layering Mule Detected`,
+        currency: topTx.symbol || currency,
+        title: isVasp
+          ? `Live Trace: Funds Deposited into ${vaspName}`
+          : (isSwept ? `Live Trace: Funds Swept & Layered via Intermediary Mule` : `Live Trace: Layering Mule Detected`),
         fir: 'LIVE-ONCHAIN-' + addr.substring(2, 8).toUpperCase(),
         reportedLoss: txValStr,
         lossInr: txValInr,
-        nearestVasp: vaspName,
+        nearestVasp: targetEntity,
         vaspType: isVasp ? (exch.fiuRegistered ? 'FIU-IND Registered Domestic VASP' : 'International Custodial VASP') : 'Unhosted On-Chain Entity',
         fiuRegistered: isVasp ? exch.fiuRegistered : false,
         complianceEmail: complianceEmail,
         verdict: isVasp
           ? `Live Blockchain Attribution: Suspect wallet ${addr} transferred ${txValStr} (${txValInr}) directly into ${vaspName}. Custodial account freeze directive under Section 91 CrPC ready for dispatch to ${complianceEmail}.`
-          : `Live Blockchain Attribution: Suspect wallet ${addr} transferred ${txValStr} (${txValInr}) to unhosted wallet ${dest}. The funds currently remain in transit on ${chainName}.`,
-        hopsCount: 1,
+          : (isSwept
+              ? `Live Blockchain Attribution: Suspect wallet ${addr} executed a fund sweep of ${txValStr} (${txValInr}) to intermediary mule ${dest}. Origin balance is currently 0 ${currency}. Complete ${res.txs.length} transaction audit trail captured below for statutory filing.`
+              : `Live Blockchain Attribution: Suspect wallet ${addr} transferred ${txValStr} (${txValInr}) to unhosted wallet ${dest}. The funds currently remain in transit on ${chainName}.`),
+        hopsCount: steps.length - 1,
         traversalTime: '1.2 seconds live trace',
-        steps: [
-          {
-            step: 1,
-            title: 'Victim Origin',
-            role: 'Victim / Originator',
-            type: 'victim',
-            entity: 'Searched Wallet Address',
-            address: addr,
-            volume: txValStr,
-            inr: txValInr,
-            time: txDate,
-            note: `Direct origin of transfer on ${chainName}. Current remaining holding: ${balStr}`,
-            txHash: topTx.hash
-          },
-          {
-            step: 2,
-            title: isVasp ? 'Identified Target VASP' : 'Layer 1 Mule',
-            role: isVasp ? 'Identified Target VASP' : 'Layer 1 Intermediary Mule',
-            type: isVasp ? 'vasp' : 'mule',
-            entity: vaspName,
-            address: dest,
-            volume: txValStr,
-            inr: txValInr,
-            time: txDate,
-            note: isVasp ? `${vaspName} received transfer. Custodial freeze notice generated.` : `Unhosted private address. Funds in transit under surveillance.`,
-            txHash: topTx.hash
-          }
-        ]
+        steps: steps,
+        historyTxs: res.txs
       };
     } else if (incoming.length > 0) {
       const topTx = incoming[0];
       const sender = topTx.from;
-      const txValFloat = Number(parseWei(topTx.value)) / 1e18;
-      const txValStr = (txValFloat < 0.0001 && txValFloat > 0 ? txValFloat.toFixed(6) : txValFloat.toFixed(4)) + ' ' + currency;
-      const txValInr = '₹' + Math.round(txValFloat * inrRate).toLocaleString('en-IN') + ' INR';
+      const txValStr = topTx.valStr;
+      const txValInr = topTx.valInr;
       const txDate = new Date(parseInt(topTx.timeStamp) * 1000).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
 
       return {
@@ -339,16 +450,16 @@ export const traceLiveWalletAPI = async (rawAddress) => {
         isLive: true,
         chain: activeChain,
         chainName: chainName,
-        currency: currency,
+        currency: topTx.symbol || currency,
         title: `Live Trace: Inflow Held in Searched Wallet`,
         fir: 'LIVE-ONCHAIN-' + addr.substring(2, 8).toUpperCase(),
-        reportedLoss: balStr,
-        lossInr: balInr,
+        reportedLoss: balFloat > 0 ? balStr : txValStr,
+        lossInr: balFloat > 0 ? balInr : txValInr,
         nearestVasp: 'Unhosted Holding Vault',
         vaspType: 'Suspect Holding Wallet',
         fiuRegistered: false,
         complianceEmail: 'N/A',
-        verdict: `Live Blockchain Attribution: Suspect wallet ${addr} currently holds ${balStr} (${balInr}) on ${chainName}. Recent inflow of ${txValStr} received from ${sender}.`,
+        verdict: `Live Blockchain Attribution: Suspect wallet ${addr} holds active history on ${chainName}. Inflow of ${txValStr} received from ${sender}. ${res.txs.length} total on-chain transactions recorded.`,
         hopsCount: 1,
         traversalTime: '1.1 seconds live trace',
         steps: [
@@ -375,10 +486,11 @@ export const traceLiveWalletAPI = async (rawAddress) => {
             volume: balStr,
             inr: balInr,
             time: txDate,
-            note: `Address holds active balance of ${balStr}.`,
+            note: `Address holds active balance of ${balStr}. Total history: ${res.txs.length} transactions.`,
             txHash: topTx.hash
           }
-        ]
+        ],
+        historyTxs: res.txs
       };
     } else {
       return {
@@ -395,7 +507,7 @@ export const traceLiveWalletAPI = async (rawAddress) => {
         vaspType: 'Inactive Address',
         fiuRegistered: false,
         complianceEmail: 'N/A',
-        verdict: `Verified On-Chain: Wallet ${addr} has 0 recorded transactions and 0 balance on Ethereum and Polygon networks.`,
+        verdict: `Verified On-Chain: Wallet ${addr} has 0 recorded transactions and 0 balance across native and token transfers on Ethereum and Polygon networks.`,
         hopsCount: 0,
         traversalTime: '1.0 seconds live trace',
         steps: [
@@ -412,7 +524,8 @@ export const traceLiveWalletAPI = async (rawAddress) => {
             note: 'Zero balance and zero transactions detected on-chain.',
             txHash: '0x0000000000000000000000000000000000000000000000000000000000000000'
           }
-        ]
+        ],
+        historyTxs: []
       };
     }
   } else if (addr.startsWith('T')) {
