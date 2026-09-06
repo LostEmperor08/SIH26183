@@ -35,10 +35,11 @@ import {
   convertChainCaseToGraph,
   formatINR,
 } from './data/forensicDataset';
-import { healthCheck, singleTrace } from './utils/api';
+import { healthCheck, singleTrace, traceLiveWalletAPI } from './utils/api';
 
 export default function App() {
   const [activeChain, setActiveChain] = useState('ethereum'); // 'ethereum' | 'polygon' | 'tron' | 'syndicate'
+  const [customLiveCase, setCustomLiveCase] = useState(null);
   const [mode, setMode] = useState('simulated');
   const [isBackendConnected, setIsBackendConnected] = useState(false);
   const [searchAddress, setSearchAddress] = useState('');
@@ -85,6 +86,7 @@ export default function App() {
 
   // Switch Chain handler
   const handleSelectChain = (chainKey) => {
+    setCustomLiveCase(null);
     setActiveChain(chainKey);
     setIsLoading(true);
     setTimeout(() => {
@@ -108,37 +110,47 @@ export default function App() {
 
   // Quick Preset search
   const handleSelectPreset = (preset) => {
+    setCustomLiveCase(null);
     setSearchAddress(preset.address);
     handleSelectChain(preset.chainKey);
   };
 
-  // Search/Trace handler
+  // Search/Trace handler - Real live on-chain query
   const handleSearchTrace = async (e) => {
     e?.preventDefault();
-    if (!searchAddress.trim()) {
+    const addr = searchAddress.trim();
+    if (!addr) {
       showToast('Please enter a suspect wallet address.');
       return;
     }
 
     setIsLoading(true);
-    const addr = searchAddress.trim();
-
-    // Check if matches known chain
-    if (addr.startsWith('T')) {
-      handleSelectChain('tron');
-    } else if (addr.toLowerCase().includes('52e9')) {
-      handleSelectChain('polygon');
-    } else {
-      handleSelectChain('ethereum');
-    }
+    showToast(`Scanning live blockchain for ${addr.substring(0, 10)}...`);
 
     try {
-      if (mode === 'live' && isBackendConnected) {
-        await singleTrace(addr);
+      const liveCase = await traceLiveWalletAPI(addr);
+      if (liveCase) {
+        setCustomLiveCase(liveCase);
+        setActiveChain(liveCase.chain);
+        const graphObj = convertChainCaseToGraph(liveCase);
+        setActiveGraphCase(graphObj);
+        if (graphObj.nodes && graphObj.nodes.length > 0) {
+          setSelectedNode(graphObj.nodes[graphObj.nodes.length - 1]);
+        }
+        showToast(`Live Attribution Complete: Traced on-chain data for ${addr.substring(0, 10)}!`);
+      } else {
+        // Fallback to chain selection if format unknown
+        if (addr.startsWith('T')) {
+          handleSelectChain('tron');
+        } else if (addr.toLowerCase().includes('52e9')) {
+          handleSelectChain('polygon');
+        } else {
+          handleSelectChain('ethereum');
+        }
       }
-      showToast(`Trace Complete: Pierced layers & identified destination VASP!`);
     } catch (err) {
-      console.warn('Trace fallback:', err);
+      console.warn('Trace error:', err);
+      showToast('Error querying blockchain nodes. Please verify address format.');
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +158,7 @@ export default function App() {
 
   // Active current case view
   const currentCase =
-    activeChain === 'syndicate' ? null : MULTI_CHAIN_CASES[activeChain];
+    customLiveCase || (activeChain === 'syndicate' ? null : MULTI_CHAIN_CASES[activeChain]);
 
   // Open Freeze Notice Modal
   const openNoticeForCurrentCase = () => {
