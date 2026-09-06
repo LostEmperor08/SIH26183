@@ -1,0 +1,6 @@
+wallet_address,reported_incident_type,victim_case_id
+0x1234567890123456789012345678901234567890,Crypto Phishing Syndicate,I4C-2026-8912
+0x7d8bf3a7ea0145ade82aca353ad2b57a50e94c77,Investment Ponzi DApp,I4C-2026-9041
+0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef,Ransomware Payment,I4C-2026-9118
+0x1f977c8c7b1a7ebf5047dcf45f2c3e6e2c5c1e8d,Telegram Task Scam,I4C-2026-9230
+0x9999999999999999999999999999999999999999,Cold Inactive Wallet,I4C-2026-9304

@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I4C | Automated Crypto Fraud Attribution System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-canvas: #090C10;
+      --bg-panel: #0D1117;
+      --border-crisp: #30363D;
+    }
+    body {
+      background-color: #090C10;
+      color: #C9D1D9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    code, pre, .font-mono {
+      font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+      font-feature-settings: "tnum" 1, "zero" 1;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090C10; }
+    ::-webkit-scrollbar-thumb { background: #21262D; }
+    ::-webkit-scrollbar-thumb:hover { background: #30363D; }
+    @keyframes flowDash { to { stroke-dashoffset: -24; } }
+    .animate-flow { stroke-dasharray: 6 6; animation: flowDash 1.2s linear infinite; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans select-none">
+
+  <!-- 1. TOP HEADER & TELEMETRY -->
+  <header class="border-b border-[#30363D] bg-[#0D1117] sticky top-0 z-40">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-[#161B22] border border-[#30363D] flex items-center justify-center text-emerald-400 font-mono font-bold text-sm">
+          <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xs sm:text-sm font-semibold tracking-wider text-slate-100 font-mono uppercase">
+              I4C | Automated Crypto Fraud Attribution System
+            </h1>
+            <span class="text-[10px] font-mono px-1.5 py-0.2 bg-[#161B22] text-slate-400 border border-[#30363D]">
+              MHA / CIS-26183
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-mono">
+            Indian Cyber Crime Coordination Centre • Statutory Law Enforcement Terminal
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div class="hidden lg:flex items-center gap-4 text-[11px] font-mono text-slate-400 border-r border-[#30363D] pr-4">
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>NCRP Sync: <strong class="text-slate-200">Active</strong></span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-tower-broadcast text-emerald-400 text-xs"></i>
+            <span>Mainnet Nodes: <strong class="text-slate-200">Connected</strong></span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-database text-cyan-400 text-xs"></i>
+            <span>FIU-IND Registry: <strong class="text-slate-200">v2.4 Loaded</strong></span>
+          </div>
+        </div>
+
+        <div class="flex items-center bg-[#161B22] border border-[#30363D] p-0.5 text-xs font-mono">
+          <button onclick="switchMode('live')" id="btn-mode-live" class="px-3 py-1 text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-server text-xs"></i> Live RPC Node
+          </button>
+          <button onclick="switchMode('simulated')" id="btn-mode-sim" class="px-3 py-1 bg-purple-950 text-purple-300 border border-purple-700 font-semibold flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-chart-line text-xs"></i> Simulated Forensic Dataset
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 space-y-4">
+
+    <!-- 2. KPI BAR (4 High-Density Metric Cards) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Card 1 -->
+      <div class="bg-[#0D1117] border border-[#30363D] p-3.5 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-[11px] font-mono uppercase text-slate-400">
+          <span><i class="fa-solid fa-coins mr-1"></i> Total Traced Volume</span>
+          <span class="text-[10px] bg-[#161B22] px-1 py-0.5 border border-[#30363D]">EVM / ERC-20</span>
+        </div>
+        <div class="mt-2">
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-bold font-mono text-slate-100">38.45</span>
+            <span class="text-xs font-mono text-slate-400 font-semibold">ETH</span>
+          </div>
+          <div class="text-xs font-mono font-medium text-emerald-400 mt-0.5">
+            ≈ ₹92,28,000 INR
+          </div>
+        </div>
+        <div class="text-[10px] font-mono text-slate-400 mt-2 border-t border-[#21262D] pt-1.5 flex justify-between">
+          <span>Seizure Scope: 100% On-Chain</span>
+          <span class="text-slate-400">$99,970 USD</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-[#0D1117] border border-[#30363D] p-3.5 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-[11px] font-mono uppercase text-slate-400">
+          <span><i class="fa-solid fa-building-columns text-emerald-400 mr-1"></i> Nearest Identified VASP</span>
+          <span class="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-1 py-0.5 border border-emerald-800">FIU-IND</span>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold font-mono text-emerald-400">Binance</div>
+          <div class="text-xs font-mono text-slate-400 truncate mt-0.5">Hot Deposit 14 (FIU Reporting Entity)</div>
+        </div>
+        <div class="text-[10px] font-mono text-slate-400 mt-2 border-t border-[#21262D] pt-1.5 flex justify-between">
+          <span>Statutory Contact: Ready</span>
+          <span class="text-emerald-400">&lt; 4h Notice SLA</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-[#0D1117] border border-[#30363D] p-3.5 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-[11px] font-mono uppercase text-slate-400">
+          <span><i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Laundering Velocity</span>
+          <span class="text-[10px] font-mono text-amber-400 bg-amber-950/60 px-1 py-0.5 border border-amber-900">Fast Layering</span>
+        </div>
+        <div class="mt-2">
+          <div class="text-xl font-bold font-mono text-slate-100">Max Depth: 4 Hops</div>
+          <div class="text-xs font-mono text-slate-400 mt-0.5">14 mins avg sweep</div>
+        </div>
+        <div class="text-[10px] font-mono text-slate-400 mt-2 border-t border-[#21262D] pt-1.5 flex justify-between">
+          <span>Typology: Mules &rarr; Hub</span>
+          <span class="text-amber-400">Layered Transit</span>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="bg-[#0D1117] border border-[#30363D] p-3.5 flex flex-col justify-between">
+        <div class="flex items-center justify-between text-[11px] font-mono uppercase text-slate-400">
+          <span><i class="fa-solid fa-triangle-exclamation text-purple-400 mr-1"></i> Syndicate Risk</span>
+          <span class="text-[10px] font-mono font-bold text-purple-300 bg-purple-950 px-1 py-0.5 border border-purple-800 animate-pulse">CONVERGENCE</span>
+        </div>
+        <div class="mt-2 flex items-center justify-between">
+          <div>
+            <div class="text-xl font-bold font-mono text-red-400">CRITICAL <span class="text-xs font-normal text-slate-400">(94/100)</span></div>
+            <div class="text-xs font-mono text-purple-300 mt-0.5">Multi-Victim Syndicate</div>
+          </div>
+          <div class="w-9 h-9 border-2 border-purple-500 rounded-none flex items-center justify-center font-mono text-[10px] font-bold text-purple-300 bg-purple-950">
+            94%
+          </div>
+        </div>
+        <div class="text-[10px] font-mono text-slate-400 mt-2 border-t border-[#21262D] pt-1.5 flex justify-between">
+          <span>Cross-Case Linkage: Active</span>
+          <span class="text-red-400">High Severity</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. DUAL INVESTIGATION INPUT PANEL -->
+    <div class="bg-[#0D1117] border border-[#30363D]">
+      <div class="flex border-b border-[#30363D] bg-[#161B22] text-xs font-mono">
+        <button id="tab-btn-multi" onclick="switchInputTab('multi')" class="px-4 py-2.5 flex items-center gap-2 border-r border-[#30363D] bg-[#0D1117] text-purple-400 font-semibold border-t-2 border-t-purple-500">
+          <i class="fa-solid fa-layer-group"></i> Syndicate Convergence Analyzer (Multi-Complaint)
+          <span class="text-[10px] bg-purple-950 text-purple-300 px-1.5 border border-purple-800">NCRP Batch</span>
+        </button>
+        <button id="tab-btn-single" onclick="switchInputTab('single')" class="px-4 py-2.5 flex items-center gap-2 border-r border-[#30363D] text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-magnifying-glass"></i> Rapid Trace (Single Suspect Address)
+        </button>
+      </div>
+
+      <div class="p-4">
+        <!-- Multi-Wallet View -->
+        <div id="input-multi" class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <label class="text-xs font-mono text-slate-300 uppercase">
+              Victim-Reported Wallet Addresses (3 to 10 Complaint Inputs)
+            </label>
+            <button onclick="loadCrimeRingCase()" class="px-3 py-1.5 text-xs font-mono font-semibold bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-600 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-bolt text-purple-400"></i>
+              <span>⚡ Load 5-Victim Crime Ring Case</span>
+            </button>
+          </div>
+          <textarea id="multi-textarea" rows="4" class="w-full bg-[#090C10] border border-[#30363D] p-2.5 font-mono text-xs text-slate-200 focus:outline-none focus:border-purple-500 rounded-none leading-relaxed">0x71a4c9b2081734bc109723a491b2901234567890
+0x83b14a09172648bc01928374a901234567890abc
+0x52e9c211782346bc01928374a901234567890def
+0x94d0183f671234bc01928374a901234567890111
+0x61c8339a581234bc01928374a901234567890222</textarea>
+          <div class="flex items-center justify-between pt-1 border-t border-[#21262D]">
+            <span class="text-[11px] font-mono text-slate-400">Shortcut: Press <kbd class="bg-[#161B22] px-1 border border-[#30363D] text-slate-300">Ctrl + Enter</kbd> to analyze</span>
+            <button onclick="loadCrimeRingCase()" class="px-5 py-2 text-xs font-mono font-semibold bg-[#238636] hover:bg-[#2EA043] text-white border border-[#2EA043] flex items-center gap-2 transition">
+              <i class="fa-solid fa-layer-group"></i> Analyze Syndicate Convergence
+            </button>
+          </div>
+        </div>
+
+        <!-- Single-Wallet View -->
+        <div id="input-single" class="space-y-3 hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+            <div class="lg:col-span-8">
+              <label class="block text-xs font-mono text-slate-300 uppercase mb-1">Suspect Wallet Address</label>
+              <input type="text" id="single-input" value="0x71a4c9b2081734bc109723a491b2901234567890" class="w-full bg-[#090C10] border border-[#30363D] px-3 py-2 font-mono text-xs text-slate-100 focus:outline-none focus:border-cyan-500 rounded-none" />
+            </div>
+            <div class="lg:col-span-4">
+              <label class="block text-xs font-mono text-slate-300 uppercase mb-1">Max Depth: <strong id="depth-val" class="text-cyan-400">3 Hops</strong></label>
+              <input type="range" min="1" max="4" value="3" oninput="document.getElementById('depth-val').textContent = this.value + ' Hops'" class="w-full accent-cyan-500 cursor-pointer h-1.5 bg-[#21262D] mt-2" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-[#21262D]">
+            <div class="text-[11px] font-mono text-slate-400">Presets: <button onclick="document.getElementById('single-input').value='0x1234567890123456789012345678901234567890'" class="text-slate-300 hover:text-cyan-400 underline ml-1">Binance (1H)</button> • <button onclick="document.getElementById('single-input').value='0x7d8bf3a7ea0145ade82aca353ad2b57a50e94c77'" class="text-slate-300 hover:text-cyan-400 underline ml-1">Kraken (2H)</button></div>
+            <button onclick="loadCrimeRingCase()" class="px-5 py-2 text-xs font-mono font-semibold bg-[#238636] hover:bg-[#2EA043] text-white border border-[#2EA043] flex items-center gap-2 transition">
+              <i class="fa-solid fa-play"></i> Execute Trace
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. CONVERGENCE ALERT BANNER -->
+    <div id="alert-banner" class="bg-[#120E24] border-2 border-purple-500/80 p-4 shadow-lg">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="p-2 bg-purple-950 border border-purple-500 text-purple-300 rounded-none mt-0.5">
+            <i class="fa-solid fa-code-fork text-purple-400 rotate-90 text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold uppercase text-purple-400 bg-purple-950/80 px-2 py-0.5 border border-purple-800">
+                CRITICAL CONVERGENCE ADVISORY
+              </span>
+              <span class="text-[10px] font-mono text-red-400 font-bold bg-red-950/80 px-2 py-0.5 border border-red-800">
+                CRITICAL RISK (MULTI-STATE SYNDICATE)
+              </span>
+            </div>
+            <h3 class="text-sm font-mono font-bold text-slate-100 mt-1">
+              ⚠️ Cross-Case Convergence Detected: <span class="text-purple-300">5 separate complaints</span> funnel into a single intermediate collector:
+            </h3>
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs font-mono">
+              <span class="px-2 py-1 bg-[#0D1117] border border-purple-700/80 text-purple-300 font-bold">
+                Syndicate Collector Hub #4 (SE Asia Cyber Complex)
+              </span>
+              <span class="text-slate-400">(0x9b48...a100)</span>
+              <i class="fa-solid fa-arrow-right text-purple-400 text-xs"></i>
+              <span class="text-slate-400">Terminal Cash-Out at:</span>
+              <span class="px-2 py-1 bg-emerald-950 border border-emerald-700 text-emerald-300 font-bold">
+                Binance (Hot Wallet 14)
+              </span>
+            </div>
+            <div class="mt-2 text-[11px] font-mono text-slate-400 flex flex-wrap items-center gap-1.5">
+              <span>Linked NCRP Records:</span>
+              <span class="bg-[#161B22] border border-[#30363D] px-1.5 py-0.2 text-slate-300">FIR-891/26 (Delhi)</span>
+              <span class="bg-[#161B22] border border-[#30363D] px-1.5 py-0.2 text-slate-300">FIR-904/26 (Bengaluru)</span>
+              <span class="bg-[#161B22] border border-[#30363D] px-1.5 py-0.2 text-slate-300">FIR-918/26 (Mumbai)</span>
+              <span class="bg-[#161B22] border border-[#30363D] px-1.5 py-0.2 text-slate-300">FIR-929/26 (Hyderabad)</span>
+              <span class="bg-[#161B22] border border-[#30363D] px-1.5 py-0.2 text-slate-300">FIR-941/26 (Ahmedabad)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:items-end gap-2 text-right">
+          <div class="text-xs font-mono text-slate-400">Total Aggregated Syndicate Flow:</div>
+          <div class="text-xl font-bold font-mono text-purple-300">38.45 ETH <span class="text-xs font-normal text-emerald-400 ml-1.5">(₹92,28,000 INR)</span></div>
+          <button onclick="openNoticeModal()" class="mt-1 px-4 py-2 text-xs font-mono font-bold bg-purple-700 hover:bg-purple-600 text-white border border-purple-400 flex items-center gap-2 transition shadow-md">
+            <i class="fa-solid fa-file-shield"></i> Generate Joint Syndicate Freeze Directive
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. INTERACTIVE NODE GRAPH TOPOLOGY -->
+    <div class="bg-[#090C10] border border-[#30363D]">
+      <div class="p-3 px-4 bg-[#0D1117] border-b border-[#30363D] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+        <div class="flex items-center gap-3">
+          <span class="font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-diagram-project text-purple-400"></i> Interactive On-Chain Graph Topology
+          </span>
+          <span class="text-slate-400">|</span>
+          <span class="text-slate-400">Nodes: <strong class="text-slate-200">10</strong> • Edges: <strong class="text-slate-200">9</strong></span>
+        </div>
+        <div class="flex items-center gap-4 text-[11px]">
+          <div class="hidden sm:flex items-center gap-2">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 bg-red-500"></span><span class="text-slate-400">Victim (Red)</span></span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 bg-amber-500"></span><span class="text-slate-400">Mule (Amber)</span></span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 bg-purple-500 shadow-[0_0_8px_#8B5CF6]"></span><span class="text-purple-300 font-bold">Syndicate Hub (Purple)</span></span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 bg-emerald-500"></span><span class="text-emerald-400">VASP (Green)</span></span>
+          </div>
+          <button onclick="toggleAmounts()" class="px-2 py-1 border border-[#30363D] bg-[#161B22] text-slate-200">
+            <i class="fa-solid fa-eye mr-1"></i> Amounts
+          </button>
+        </div>
+      </div>
+
+      <!-- SVG Canvas -->
+      <div class="overflow-x-auto p-4 flex justify-center bg-[#090C10]">
+        <svg width="1000" height="560" viewBox="0 0 1000 560" class="select-none">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#161B22" stroke-width="1"/>
+            </pattern>
+            <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#EF4444" />
+            </marker>
+            <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#8B5CF6" />
+            </marker>
+            <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 1 L 8 5 L 0 9 z" fill="#10B981" />
+            </marker>
+          </defs>
+
+          <rect width="1000" height="560" fill="url(#grid)" />
+
+          <!-- EDGES -->
+          <!-- Victim 1 to Mule 1 -->
+          <path d="M 230 105 C 275 105, 275 155, 320 155" fill="none" stroke="#EF4444" stroke-width="1.5" class="animate-flow" marker-end="url(#arrow-red)" />
+          <!-- Victim 2 to Mule 1 -->
+          <path d="M 230 205 C 275 205, 275 155, 320 155" fill="none" stroke="#EF4444" stroke-width="1.5" class="animate-flow" marker-end="url(#arrow-red)" />
+          <!-- Victim 3 to Mule 2 -->
+          <path d="M 230 305 C 275 305, 275 305, 320 305" fill="none" stroke="#EF4444" stroke-width="1.5" class="animate-flow" marker-end="url(#arrow-red)" />
+          <!-- Victim 4 to Mule 3 -->
+          <path d="M 230 405 C 275 405, 275 455, 320 455" fill="none" stroke="#EF4444" stroke-width="1.5" class="animate-flow" marker-end="url(#arrow-red)" />
+          <!-- Victim 5 to Mule 3 -->
+          <path d="M 230 505 C 275 505, 275 455, 320 455" fill="none" stroke="#EF4444" stroke-width="1.5" class="animate-flow" marker-end="url(#arrow-red)" />
+
+          <!-- Mules to Syndicate Convergence Hub (PURPLE CONVERGENCE) -->
+          <path d="M 490 155 C 545 155, 545 305, 600 305" fill="none" stroke="#8B5CF6" stroke-width="2.5" class="animate-flow" marker-end="url(#arrow-purple)" />
+          <path d="M 490 305 C 545 305, 545 305, 600 305" fill="none" stroke="#8B5CF6" stroke-width="2.5" class="animate-flow" marker-end="url(#arrow-purple)" />
+          <path d="M 490 455 C 545 455, 545 305, 600 305" fill="none" stroke="#8B5CF6" stroke-width="2.5" class="animate-flow" marker-end="url(#arrow-purple)" />
+
+          <!-- Syndicate Hub to Target VASP (EMERALD GREEN) -->
+          <path d="M 770 305 C 825 305, 825 305, 880 305" fill="none" stroke="#10B981" stroke-width="3" class="animate-flow" marker-end="url(#arrow-emerald)" />
+
+          <!-- NODES: 5 Victims -->
+          <!-- V1 -->
+          <g transform="translate(60, 70)" onclick="selectNode('v1')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#180A0A" stroke="#EF4444" stroke-width="1.5"/>
+            <rect x="6" y="6" width="60" height="14" fill="#450A0A"/>
+            <text x="36" y="16" fill="#FCA5A5" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">VICTIM</text>
+            <text x="74" y="16" fill="#94A3B8" font-size="8" font-family="monospace">FIR-891/26</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Victim 1 (Delhi)</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x71a4...7890</text>
+            <text x="8" y="63" fill="#CBD5E1" font-size="9" font-family="monospace" font-weight="bold">Vol: 5.00 ETH</text>
+          </g>
+          <!-- V2 -->
+          <g transform="translate(60, 170)" onclick="selectNode('v2')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#180A0A" stroke="#EF4444" stroke-width="1.5"/>
+            <rect x="6" y="6" width="60" height="14" fill="#450A0A"/>
+            <text x="36" y="16" fill="#FCA5A5" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">VICTIM</text>
+            <text x="74" y="16" fill="#94A3B8" font-size="8" font-family="monospace">FIR-904/26</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Victim 2 (Bengaluru)</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x83b1...0abc</text>
+            <text x="8" y="63" fill="#CBD5E1" font-size="9" font-family="monospace" font-weight="bold">Vol: 7.50 ETH</text>
+          </g>
+          <!-- V3 -->
+          <g transform="translate(60, 270)" onclick="selectNode('v3')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#180A0A" stroke="#EF4444" stroke-width="1.5"/>
+            <rect x="6" y="6" width="60" height="14" fill="#450A0A"/>
+            <text x="36" y="16" fill="#FCA5A5" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">VICTIM</text>
+            <text x="74" y="16" fill="#94A3B8" font-size="8" font-family="monospace">FIR-918/26</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Victim 3 (Mumbai)</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x52e9...0def</text>
+            <text x="8" y="63" fill="#CBD5E1" font-size="9" font-family="monospace" font-weight="bold">Vol: 10.00 ETH</text>
+          </g>
+          <!-- V4 -->
+          <g transform="translate(60, 370)" onclick="selectNode('v4')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#180A0A" stroke="#EF4444" stroke-width="1.5"/>
+            <rect x="6" y="6" width="60" height="14" fill="#450A0A"/>
+            <text x="36" y="16" fill="#FCA5A5" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">VICTIM</text>
+            <text x="74" y="16" fill="#94A3B8" font-size="8" font-family="monospace">FIR-929/26</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Victim 4 (Hyderabad)</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x94d0...0111</text>
+            <text x="8" y="63" fill="#CBD5E1" font-size="9" font-family="monospace" font-weight="bold">Vol: 4.00 ETH</text>
+          </g>
+          <!-- V5 -->
+          <g transform="translate(60, 470)" onclick="selectNode('v5')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#180A0A" stroke="#EF4444" stroke-width="1.5"/>
+            <rect x="6" y="6" width="60" height="14" fill="#450A0A"/>
+            <text x="36" y="16" fill="#FCA5A5" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">VICTIM</text>
+            <text x="74" y="16" fill="#94A3B8" font-size="8" font-family="monospace">FIR-941/26</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Victim 5 (Ahmedabad)</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x61c8...0222</text>
+            <text x="8" y="63" fill="#CBD5E1" font-size="9" font-family="monospace" font-weight="bold">Vol: 11.95 ETH</text>
+          </g>
+
+          <!-- 3 Mules -->
+          <!-- M1 -->
+          <g transform="translate(320, 120)" onclick="selectNode('m1')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#191206" stroke="#F59E0B" stroke-width="1.5"/>
+            <rect x="6" y="6" width="50" height="14" fill="#451A03"/>
+            <text x="31" y="16" fill="#FCD34D" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">MULE A</text>
+            <text x="64" y="16" fill="#94A3B8" font-size="8" font-family="monospace">Hop 1 Funnel</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Layering Mule A</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x3344...ff01</text>
+            <text x="8" y="63" fill="#FCD34D" font-size="9" font-family="monospace" font-weight="bold">Vol: 12.50 ETH</text>
+          </g>
+          <!-- M2 -->
+          <g transform="translate(320, 270)" onclick="selectNode('m2')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#191206" stroke="#F59E0B" stroke-width="1.5"/>
+            <rect x="6" y="6" width="50" height="14" fill="#451A03"/>
+            <text x="31" y="16" fill="#FCD34D" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">MULE B</text>
+            <text x="64" y="16" fill="#94A3B8" font-size="8" font-family="monospace">Hop 1 Transit</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Layering Mule B</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x4455...ff02</text>
+            <text x="8" y="63" fill="#FCD34D" font-size="9" font-family="monospace" font-weight="bold">Vol: 10.00 ETH</text>
+          </g>
+          <!-- M3 -->
+          <g transform="translate(320, 420)" onclick="selectNode('m3')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#191206" stroke="#F59E0B" stroke-width="1.5"/>
+            <rect x="6" y="6" width="50" height="14" fill="#451A03"/>
+            <text x="31" y="16" fill="#FCD34D" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">MULE C</text>
+            <text x="64" y="16" fill="#94A3B8" font-size="8" font-family="monospace">Hop 1 Sweep</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Layering Mule C</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x5566...ff03</text>
+            <text x="8" y="63" fill="#FCD34D" font-size="9" font-family="monospace" font-weight="bold">Vol: 15.95 ETH</text>
+          </g>
+
+          <!-- ELECTRIC PURPLE SYNDICATE CONVERGENCE HUB (GLOWING) -->
+          <g transform="translate(600, 270)" onclick="selectNode('hub')" class="cursor-pointer">
+            <rect x="-4" y="-4" width="178" height="78" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-opacity="0.6" filter="drop-shadow(0 0 10px rgba(139, 92, 246, 0.8))"/>
+            <rect width="170" height="70" fill="#150D2A" stroke="#8B5CF6" stroke-width="2"/>
+            <rect x="6" y="6" width="85" height="14" fill="#3B0764"/>
+            <text x="48" y="16" fill="#D8B4FE" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">CONVERGENCE HUB</text>
+            <text x="96" y="16" fill="#C084FC" font-size="8" font-family="monospace">5 Victims Intersect</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Syndicate Hub #4</text>
+            <text x="8" y="50" fill="#A855F7" font-size="9" font-family="monospace">0x9b48...a100</text>
+            <text x="8" y="63" fill="#D8B4FE" font-size="9" font-family="monospace" font-weight="bold">Total: 38.45 ETH</text>
+          </g>
+
+          <!-- TARGET VASP (CYBER GREEN) -->
+          <g transform="translate(880, 270)" onclick="selectNode('vasp')" class="cursor-pointer">
+            <rect width="170" height="70" fill="#061912" stroke="#10B981" stroke-width="2"/>
+            <rect x="6" y="6" width="75" height="14" fill="#064E3B"/>
+            <text x="43" y="16" fill="#6EE7B7" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">TARGET VASP</text>
+            <text x="86" y="16" fill="#10B981" font-size="8" font-family="monospace">FIU-IND</text>
+            <text x="8" y="36" fill="#F8FAFC" font-size="10" font-family="monospace" font-weight="bold">Binance (Hot 14)</text>
+            <text x="8" y="50" fill="#64748B" font-size="9" font-family="monospace">0x28c6...1d60</text>
+            <text x="8" y="63" fill="#6EE7B7" font-size="9" font-family="monospace" font-weight="bold">Seizure: 38.43 ETH</text>
+          </g>
+        </svg>
+      </div>
+      <div class="p-2 px-4 bg-[#0D1117] border-t border-[#30363D] flex items-center justify-between text-[11px] font-mono text-slate-400">
+        <span>Click any node in graph to open forensic inspection drawer</span>
+        <span class="text-purple-400 font-bold">Converged Syndicate Hub: 0x9b48...a100 (Click to inspect)</span>
+      </div>
+    </div>
+
+    <!-- 6. ATTRIBUTION & CASE LEDGER TABLE -->
+    <div class="bg-[#0D1117] border border-[#30363D]">
+      <div class="p-3 px-4 bg-[#161B22] border-b border-[#30363D] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+        <span class="font-bold text-slate-100 uppercase">Attribution & Case Ledger (6 Active Records)</span>
+        <button onclick="exportCSV()" class="px-3 py-1 bg-[#21262D] hover:bg-[#30363D] text-slate-200 border border-[#30363D] flex items-center gap-1.5">
+          <i class="fa-solid fa-download text-cyan-400"></i> Export CSV
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left font-mono text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-[#30363D] bg-[#090C10] text-slate-400 text-[10px] uppercase">
+              <th class="py-2.5 px-4">Suspect Address</th>
+              <th class="py-2.5 px-3">FIR / Case Ref</th>
+              <th class="py-2.5 px-3 text-center">Depth</th>
+              <th class="py-2.5 px-3 text-right">Crypto Volume</th>
+              <th class="py-2.5 px-3 text-right">Seizure Value (INR)</th>
+              <th class="py-2.5 px-3">Destination VASP</th>
+              <th class="py-2.5 px-3">Typology</th>
+              <th class="py-2.5 px-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#21262D]" id="ledger-tbody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 7. RIGHT-SIDE WALLET INSPECTOR DRAWER -->
+  <aside id="drawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#0D1117] border-l border-[#30363D] shadow-2xl flex flex-col font-mono text-slate-200">
+    <div class="p-4 border-b border-[#30363D] bg-[#161B22] flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 bg-purple-500 animate-pulse"></span>
+        <h2 class="text-xs font-bold uppercase text-slate-100">Tactical Node Dossier</h2>
+        <span class="text-[10px] text-slate-400">| I4C Intelligence</span>
+      </div>
+      <button onclick="closeDrawer()" class="p-1 hover:bg-[#30363D] text-slate-400 hover:text-white">✕</button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 space-y-5">
+      <div>
+        <div class="text-[10px] text-slate-400 uppercase mb-1">Entity Classification</div>
+        <div class="flex items-center gap-2">
+          <span id="drawer-badge" class="px-2 py-0.5 text-xs font-bold bg-purple-950 text-purple-300 border border-purple-700">
+            Syndicate Collector Hub
+          </span>
+          <span id="drawer-label" class="text-xs text-slate-300 font-semibold truncate">Syndicate Collector Hub #4</span>
+        </div>
+        <div class="mt-1.5 text-[11px] text-purple-300 bg-[#161B22] border border-[#30363D] px-2 py-1">
+          Case Ref: <strong id="drawer-fir">COMMON TO ALL 5 NCRP COMPLAINTS</strong>
+        </div>
+      </div>
+
+      <div class="bg-[#090C10] border border-[#30363D] p-3">
+        <div class="text-[10px] text-slate-400 uppercase mb-1">On-Chain Identifier</div>
+        <div id="drawer-addr" class="font-mono text-xs text-slate-100 break-all bg-[#161B22] p-2 border border-[#30363D]">
+          0x9b48c8914b31a89c8942b09085cfd138f29ea100
+        </div>
+        <div class="mt-2 flex items-center justify-between">
+          <button onclick="copyDrawerAddr()" id="copy-btn" class="px-2.5 py-1 text-[11px] bg-[#21262D] hover:bg-[#30363D] text-slate-200 border border-[#30363D]">
+            <i class="fa-solid fa-copy mr-1"></i> Copy Hash
+          </button>
+          <a id="etherscan-link" href="https://etherscan.io/address/0x9b48c8914b31a89c8942b09085cfd138f29ea100" target="_blank" class="px-2.5 py-1 text-[11px] bg-[#21262D] hover:bg-[#30363D] text-cyan-400 border border-[#30363D]">
+            Etherscan <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-[10px] text-slate-400 uppercase mb-2">Financial Ledger Summary</div>
+        <div class="space-y-2">
+          <div class="bg-[#090C10] border border-[#30363D] p-2.5 flex items-center justify-between">
+            <span class="text-xs text-slate-300"><i class="fa-solid fa-arrow-down-left text-emerald-400 mr-1.5"></i> Total Inflow:</span>
+            <div class="text-right">
+              <div id="drawer-inflow" class="text-xs font-bold text-emerald-400">38.45 ETH</div>
+              <div id="drawer-inflow-inr" class="text-[10px] text-slate-400">≈ ₹92,28,000 INR</div>
+            </div>
+          </div>
+          <div class="bg-[#090C10] border border-[#30363D] p-2.5 flex items-center justify-between">
+            <span class="text-xs text-slate-300"><i class="fa-solid fa-arrow-up-right text-red-400 mr-1.5"></i> Total Outflow:</span>
+            <div class="text-right">
+              <div id="drawer-outflow" class="text-xs font-bold text-slate-200">38.45 ETH</div>
+              <div id="drawer-outflow-inr" class="text-[10px] text-slate-400">≈ ₹92,28,000 INR</div>
+            </div>
+          </div>
+          <div class="bg-[#090C10] border border-[#30363D] p-2.5 flex items-center justify-between">
+            <span class="text-xs text-slate-300"><i class="fa-solid fa-wallet text-cyan-400 mr-1.5"></i> Net Retained Balance:</span>
+            <div class="text-right">
+              <div id="drawer-retained" class="text-xs font-bold text-cyan-400">0.0200 ETH</div>
+              <div id="drawer-retained-inr" class="text-[10px] text-slate-400">≈ ₹4,800 INR</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-[10px] text-slate-400 uppercase mb-2">Top On-Chain Counterparties</div>
+        <div class="bg-[#090C10] border border-[#30363D] p-3 space-y-2 text-xs">
+          <div>
+            <div class="text-[10px] text-slate-400">Primary Funding Source (Top Sender):</div>
+            <div id="drawer-sender" class="font-bold text-slate-200">Mules A, B, and C (3 Streams)</div>
+          </div>
+          <div class="border-t border-[#21262D] pt-2">
+            <div class="text-[10px] text-slate-400">Primary Cash-out Path (Top Receiver):</div>
+            <div id="drawer-receiver" class="font-bold text-emerald-400">0x28c6c...Binance 14</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-4 bg-[#161B22] border-t border-[#30363D] space-y-2">
+      <button onclick="openNoticeModal()" class="w-full py-2 px-3 text-xs font-mono font-bold bg-red-700 hover:bg-red-600 text-white border border-red-500 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-shield-halved"></i> Flag in I4C Freeze Notice
+      </button>
+      <button onclick="alert('Expanded 2 additional counterparties on forensic canvas.')" class="w-full py-2 px-3 text-xs font-mono font-semibold bg-[#21262D] hover:bg-[#30363D] text-slate-200 border border-[#30363D] flex items-center justify-center gap-2">
+        <i class="fa-solid fa-share-nodes text-cyan-400"></i> Expand Counterparties (Add to Canvas)
+      </button>
+    </div>
+  </aside>
+
+  <!-- 8. VASP FREEZE NOTICE MODAL -->
+  <div id="notice-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 font-mono">
+    <div class="bg-[#0D1117] border border-[#30363D] w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl">
+      <div class="p-3 px-4 bg-[#161B22] border-b border-[#30363D] flex items-center justify-between">
+        <span class="text-xs font-bold text-slate-100 uppercase tracking-wider">
+          <i class="fa-solid fa-shield-virus text-red-400 mr-2"></i> Section 91 Cr.P.C. / Section 94 BNSS Statutory Freeze Notice
+        </span>
+        <button onclick="closeNoticeModal()" class="p-1 hover:bg-[#30363D] text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="p-3 px-4 bg-[#090C10] border-b border-[#30363D] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase mb-1">FIR / Case Ref:</label>
+          <input type="text" id="modal-fir" value="FIR-402/2026 (Joint Taskforce)" class="w-full bg-[#161B22] border border-[#30363D] px-2 py-1 text-slate-200 text-xs" />
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase mb-1">Police Station:</label>
+          <input type="text" id="modal-ps" value="Special Cyber Cell, Delhi Police" class="w-full bg-[#161B22] border border-[#30363D] px-2 py-1 text-slate-200 text-xs" />
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 uppercase mb-1">Investigating Officer:</label>
+          <input type="text" id="modal-io" value="Insp. Vikram Singh (Cyber Cell)" class="w-full bg-[#161B22] border border-[#30363D] px-2 py-1 text-slate-200 text-xs" />
+        </div>
+      </div>
+
+      <div id="notice-body" class="p-4 overflow-y-auto flex-1 font-mono text-[11px] text-slate-300 bg-[#090C10] whitespace-pre-wrap leading-relaxed border-b border-[#30363D]">
+================================================================================
+STATUTORY ASSET PRESERVATION & EMERGENCY FREEZE DIRECTIVE
+ISSUED UNDER SECTION 91 Cr.P.C. / SECTION 94 BHARATIYA NAGARIK SURAKSHA SANHITA (BNSS), 2023
+GOVERNMENT OF INDIA • MINISTRY OF HOME AFFAIRS
+Indian Cyber Crime Coordination Centre (I4C), CIS Division
+================================================================================
+
+DATE OF ISSUANCE: September 06, 2026
+REFERENCE CASE IDENTIFIER: I4C-ETH-BNSS-904128
+NCRP / CRIME PORTAL CASE REF: FIR-402/2026 (Joint Taskforce)
+ORIGINATING POLICE JURISDICTION: Special Cyber Cell, Delhi Police
+AUTHORIZING INVESTIGATIVE OFFICER: Insp. Vikram Singh (Cyber Cell)
+
+TO:
+The Chief Compliance Officer & Law Enforcement Action Desk
+Binance (Hot Wallet 14)
+Official Liaison Ingestion: compliance@binance.com
+Jurisdiction Status: Reporting Entity under PMLA / International AML Mutual Legal Assistance
+
+SUBJECT: STATUTORY NOTICE TO IMMEDIATELY FREEZE FRAUD-LINKED PROCEEDS OF CRIME
+
+Sir / Madam,
+
+1. This urgent communication is issued in connection with an ongoing law enforcement investigation into an organized cryptocurrency cyber-fraud syndicate registered on the National Cyber Crime Reporting Portal (NCRP / Helpline 1930).
+
+2. REAL-TIME FORENSIC ATTRIBUTION FINDINGS:
+   Automated blockchain analytics conducted under I4C investigative supervision has established that illicit proceeds originating from 5 cyber crime victims converged through intermediary layering wallets and have been directly deposited into your centralized exchange platform:
+
+   - Suspect Origin / Converged Hub: 0x9b48c8914b31a89c8942b09085cfd138f29ea100
+   - Destination Platform / VASP: Binance (Hot Wallet 14)
+   - Total Tracked Crypto Proceeds: 38.45 ETH
+   - Estimated Seizure Value: ₹92,28,000 INR (Approx. $99,970 USD)
+   - Final On-Chain Deposit Hash: 0x9c99fa812bc81412e098a834012bc09148f92418e2098412bc908124ef908124
+
+3. STATUTORY DIRECTIVE FOR MANDATORY COMPLIANCE:
+   In exercise of statutory powers conferred under Section 91 of the Code of Criminal Procedure, 1973 (read with Section 94 of Bharatiya Nagarik Suraksha Sanhita, 2023):
+   
+   a) ACCOUNT FREEZE: You are strictly directed to IMMEDIATELY FREEZE all accounts, user IDs, internal sub-accounts, crypto balances, and linked fiat INR/USD wallets associated with the recipient deposit transaction.
+   
+   b) KYC & LOG PRESERVATION: Secure and preserve all subscriber registration records, Aadhaar/PAN/Passport documents, IP login logs with port numbers & UTC timestamps, device IMEIs, and associated bank accounts.
+   
+   c) COMPLIANCE SLA: Acknowledge receipt and confirm freezing of assets within 4 (four) hours of transmission to prevent asset dissipation.
+
+4. Failure to comply with this statutory directive may attract penal consequences under relevant provisions of the Indian Penal Code / Bharatiya Nyaya Sanhita and the Prevention of Money Laundering Act (PMLA).
+
+ISSUED UNDER OFFICIAL SEAL:
+Insp. Vikram Singh (Cyber Cell)
+Special Cyber Cell, Delhi Police
+Copy to: Central Cyber Cell, I4C (cybercrime.gov.in), Ministry of Home Affairs, New Delhi.
+================================================================================
+      </div>
+
+      <div class="p-3 px-4 bg-[#161B22] flex items-center justify-between text-xs">
+        <div class="text-[11px] text-slate-400">Target Desk: <strong class="text-slate-200">compliance@binance.com</strong></div>
+        <div class="flex items-center gap-2">
+          <button onclick="copyNotice()" id="modal-copy-btn" class="px-3 py-1.5 bg-[#21262D] hover:bg-[#30363D] text-slate-200 border border-[#30363D]">
+            <i class="fa-solid fa-copy mr-1"></i> Copy Notice
+          </button>
+          <button onclick="downloadNotice()" class="px-4 py-1.5 bg-red-700 hover:bg-red-600 text-white border border-red-500 font-bold">
+            <i class="fa-solid fa-download mr-1"></i> Download Official Directive (.TXT)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tactical Status Footer -->
+  <footer class="border-t border-[#30363D] bg-[#0D1117] py-3 text-[11px] font-mono text-slate-500">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-between gap-2">
+      <span>I4C CYBER FORENSICS TERMINAL • CIS DIVISION, MINISTRY OF HOME AFFAIRS</span>
+      <span>BNSS / Section 91 Cr.P.C. Digital Evidence Preservation Protocol • Problem ID: 26183</span>
+    </div>
+  </footer>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    const LEDGER_DATA = [
+      { wallet: "0x71a4c9b2081734bc109723a491b2901234567890", short: "0x71a4...7890", fir: "FIR-891/26", hop: 3, eth: 5.0, inr: "₹12,00,000", vasp: "Binance", type: "Telegram Task Scam", status: "Attributed", nodeId: "v1" },
+      { wallet: "0x83b14a09172648bc01928374a901234567890abc", short: "0x83b1...0abc", fir: "FIR-904/26", hop: 3, eth: 7.5, inr: "₹18,00,000", vasp: "Binance", type: "Digital Arrest / CBI", status: "Attributed", nodeId: "v2" },
+      { wallet: "0x52e9c211782346bc01928374a901234567890def", short: "0x52e9...0def", fir: "FIR-918/26", hop: 3, eth: 10.0, inr: "₹24,00,000", vasp: "Binance", type: "Pig Butchering / DApp", status: "Attributed", nodeId: "v3" },
+      { wallet: "0x94d0183f671234bc01928374a901234567890111", short: "0x94d0...0111", fir: "FIR-929/26", hop: 3, eth: 4.0, inr: "₹9,60,000", vasp: "Binance", type: "Sextortion Mule", status: "Attributed", nodeId: "v4" },
+      { wallet: "0x61c8339a581234bc01928374a901234567890222", short: "0x61c8...0222", fir: "FIR-941/26", hop: 3, eth: 11.95, inr: "₹28,68,000", vasp: "Binance", type: "Part-Time Review Scam", status: "Attributed", nodeId: "v5" },
+      { wallet: "0x9b48c8914b31a89c8942b09085cfd138f29ea100", short: "0x9b48...a100", fir: "CONVERGENCE HUB", hop: 1, eth: 38.45, inr: "₹92,28,000", vasp: "Binance", type: "Syndicate Collector", status: "CONVERGED", nodeId: "hub" }
+    ];
+
+    const NODES_DATA = {
+      v1: { badge: "Victim Origin", label: "Victim 1 (Delhi)", fir: "FIR-891/2026 (Delhi)", addr: "0x71a4c9b2081734bc109723a491b2901234567890", inflow: "5.00 ETH", inflowInr: "≈ ₹12,00,000 INR", outflow: "5.00 ETH", outflowInr: "≈ ₹12,00,000 INR", retained: "0.0000 ETH", sender: "Victim Bank Account", receiver: "0x3344...Mule A" },
+      v2: { badge: "Victim Origin", label: "Victim 2 (Bengaluru)", fir: "FIR-904/2026 (Bengaluru)", addr: "0x83b14a09172648bc01928374a901234567890abc", inflow: "7.50 ETH", inflowInr: "≈ ₹18,00,000 INR", outflow: "7.50 ETH", outflowInr: "≈ ₹18,00,000 INR", retained: "0.0000 ETH", sender: "Victim Savings Account", receiver: "0x3344...Mule A" },
+      v3: { badge: "Victim Origin", label: "Victim 3 (Mumbai)", fir: "FIR-918/2026 (Mumbai)", addr: "0x52e9c211782346bc01928374a901234567890def", inflow: "10.00 ETH", inflowInr: "≈ ₹24,00,000 INR", outflow: "10.00 ETH", outflowInr: "≈ ₹24,00,000 INR", retained: "0.0000 ETH", sender: "P2P Payment", receiver: "0x4455...Mule B" },
+      v4: { badge: "Victim Origin", label: "Victim 4 (Hyderabad)", fir: "FIR-929/2026 (Hyderabad)", addr: "0x94d0183f671234bc01928374a901234567890111", inflow: "4.00 ETH", inflowInr: "≈ ₹9,60,000 INR", outflow: "4.00 ETH", outflowInr: "≈ ₹9,60,000 INR", retained: "0.0000 ETH", sender: "IMPS Payment", receiver: "0x5566...Mule C" },
+      v5: { badge: "Victim Origin", label: "Victim 5 (Ahmedabad)", fir: "FIR-941/2026 (Ahmedabad)", addr: "0x61c8339a581234bc01928374a901234567890222", inflow: "11.95 ETH", inflowInr: "≈ ₹28,68,000 INR", outflow: "11.95 ETH", outflowInr: "≈ ₹28,68,000 INR", retained: "0.0000 ETH", sender: "UPI Payment", receiver: "0x5566...Mule C" },
+      m1: { badge: "Layering Mule A", label: "Layering Mule A", fir: "FIR-891 & 904 Intermediary", addr: "0x3344aabb112233445566778899aabbccddeeff01", inflow: "12.50 ETH", inflowInr: "≈ ₹30,00,000 INR", outflow: "12.50 ETH", outflowInr: "≈ ₹30,00,000 INR", retained: "0.0000 ETH", sender: "Victim 1 & Victim 2", receiver: "0x9b48...Syndicate Hub" },
+      m2: { badge: "Layering Mule B", label: "Layering Mule B", fir: "FIR-918 Intermediary", addr: "0x4455ccdd2233445566778899aabbccddeeff02", inflow: "10.00 ETH", inflowInr: "≈ ₹24,00,000 INR", outflow: "10.00 ETH", outflowInr: "≈ ₹24,00,000 INR", retained: "0.0000 ETH", sender: "Victim 3", receiver: "0x9b48...Syndicate Hub" },
+      m3: { badge: "Layering Mule C", label: "Layering Mule C", fir: "FIR-929 & 941 Intermediary", addr: "0x5566eeff33445566778899aabbccddeeff03", inflow: "15.95 ETH", inflowInr: "≈ ₹38,28,000 INR", outflow: "15.95 ETH", outflowInr: "≈ ₹38,28,000 INR", retained: "0.0000 ETH", sender: "Victim 4 & Victim 5", receiver: "0x9b48...Syndicate Hub" },
+      hub: { badge: "Syndicate Collector Hub", label: "Syndicate Collector Hub #4", fir: "COMMON TO ALL 5 NCRP COMPLAINTS", addr: "0x9b48c8914b31a89c8942b09085cfd138f29ea100", inflow: "38.45 ETH", inflowInr: "≈ ₹92,28,000 INR", outflow: "38.45 ETH", outflowInr: "≈ ₹92,28,000 INR", retained: "0.0200 ETH", sender: "Mules A, B, and C (3 Streams)", receiver: "0x28c6c...Binance 14" },
+      vasp: { badge: "Target VASP", label: "Binance (Hot Wallet 14)", fir: "Target Asset Seizure Point", addr: "0x28c6c06298d514db089934071355e5743bf21d60", inflow: "24500 ETH", inflowInr: "Custodial Reserve", outflow: "24100 ETH", outflowInr: "Orderbook Pool", retained: "400.0 ETH", sender: "0x9b48...Syndicate Hub", receiver: "Internal Orderbook" }
+    };
+
+    function renderLedger() {
+      const tbody = document.getElementById('ledger-tbody');
+      tbody.innerHTML = '';
+      LEDGER_DATA.forEach(row => {
+        const tr = document.createElement('tr');
+        const isConv = row.status === 'CONVERGED';
+        tr.className = `cursor-pointer transition-colors ${isConv ? 'bg-purple-950/20 hover:bg-purple-950/40 border-l-2 border-l-purple-500' : 'hover:bg-[#161B22]'}`;
+        tr.onclick = () => selectNode(row.nodeId);
+        tr.innerHTML = `
+          <td class="py-2.5 px-4 font-mono ${isConv ? 'text-purple-300 font-bold' : 'text-slate-200'}">${row.short}</td>
+          <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 bg-[#161B22] border border-[#30363D] text-[11px]">${row.fir}</span></td>
+          <td class="py-2.5 px-3 text-center text-[11px]">${row.hop} hops</td>
+          <td class="py-2.5 px-3 text-right font-bold text-slate-100">${row.eth.toFixed(2)} ETH</td>
+          <td class="py-2.5 px-3 text-right text-emerald-400 font-medium">${row.inr}</td>
+          <td class="py-2.5 px-3"><span class="font-bold text-emerald-400"><i class="fa-solid fa-circle-check text-xs mr-1"></i> ${row.vasp}</span></td>
+          <td class="py-2.5 px-3"><span class="text-[10px] px-1.5 py-0.5 border ${isConv ? 'bg-purple-950 text-purple-300 border-purple-800 font-bold' : 'bg-[#161B22] text-slate-300 border-[#30363D]'}">${row.type}</span></td>
+          <td class="py-2.5 px-4 text-center" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="selectNode('${row.nodeId}')" class="px-2 py-1 bg-[#21262D] hover:bg-[#30363D] text-cyan-400 border border-[#30363D] text-[11px]"><i class="fa-solid fa-crosshairs mr-1"></i> Inspect</button>
+              <button onclick="openNoticeModal()" class="px-2 py-1 bg-red-950 hover:bg-red-900 text-red-300 border border-red-800 text-[11px] font-bold"><i class="fa-solid fa-file-shield mr-1"></i> Freeze</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function selectNode(key) {
+      const data = NODES_DATA[key];
+      if (!data) return;
+      document.getElementById('drawer-badge').textContent = data.badge;
+      document.getElementById('drawer-label').textContent = data.label;
+      document.getElementById('drawer-fir').textContent = data.fir;
+      document.getElementById('drawer-addr').textContent = data.addr;
+      document.getElementById('drawer-inflow').textContent = data.inflow;
+      document.getElementById('drawer-inflow-inr').textContent = data.inflowInr;
+      document.getElementById('drawer-outflow').textContent = data.outflow;
+      document.getElementById('drawer-outflow-inr').textContent = data.outflowInr;
+      document.getElementById('drawer-retained').textContent = data.retained;
+      document.getElementById('drawer-sender').textContent = data.sender;
+      document.getElementById('drawer-receiver').textContent = data.receiver;
+      document.getElementById('etherscan-link').href = `https://etherscan.io/address/${data.addr}`;
+      document.getElementById('drawer').classList.remove('hidden');
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawer').classList.add('hidden');
+    }
+
+    function copyDrawerAddr() {
+      const addr = document.getElementById('drawer-addr').textContent.trim();
+      navigator.clipboard.writeText(addr);
+      const btn = document.getElementById('copy-btn');
+      btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400 mr-1"></i> Copied';
+      setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copy Hash'; }, 1500);
+    }
+
+    function openNoticeModal() {
+      document.getElementById('notice-modal').classList.remove('hidden');
+      document.getElementById('notice-modal').classList.add('flex');
+    }
+
+    function closeNoticeModal() {
+      document.getElementById('notice-modal').classList.add('hidden');
+      document.getElementById('notice-modal').classList.remove('flex');
+    }
+
+    function copyNotice() {
+      const text = document.getElementById('notice-body').textContent;
+      navigator.clipboard.writeText(text);
+      const btn = document.getElementById('modal-copy-btn');
+      btn.innerHTML = '<i class="fa-solid fa-check text-emerald-400 mr-1"></i> Copied!';
+      setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy mr-1"></i> Copy Notice'; }, 1500);
+    }
+
+    function downloadNotice() {
+      const text = document.getElementById('notice-body').textContent;
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `I4C_Section91_FreezeDirective_Binance.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function switchInputTab(tab) {
+      if (tab === 'multi') {
+        document.getElementById('input-multi').classList.remove('hidden');
+        document.getElementById('input-single').classList.add('hidden');
+        document.getElementById('tab-btn-multi').className = 'px-4 py-2.5 flex items-center gap-2 border-r border-[#30363D] bg-[#0D1117] text-purple-400 font-semibold border-t-2 border-t-purple-500';
+        document.getElementById('tab-btn-single').className = 'px-4 py-2.5 flex items-center gap-2 border-r border-[#30363D] text-slate-400 hover:text-slate-200';
+      } else {
+        document.getElementById('input-multi').classList.add('hidden');
+        document.getElementById('input-single').classList.remove('hidden');
+        document.getElementById('tab-btn-single').className = 'px-4 py-2.5 flex items-center gap-2 border-r border-[#30363D] bg-[#0D1117] text-cyan-400 font-semibold border-t-2 border-t-cyan-500';
+        document.getElementById('tab-btn-multi').className = 'px-4 py-2.5 flex items-center gap-2 border-r border-[#30363D] text-slate-400 hover:text-slate-200';
+      }
+    }
+
+    function loadCrimeRingCase() {
+      selectNode('hub');
+      alert("Loaded 5-Victim Cross-State Syndicate Crime Ring Case (FIR-891 to 941). Convergence node highlighted.");
+    }
+
+    function switchMode(m) {
+      if (m === 'live') {
+        document.getElementById('btn-mode-live').className = 'px-3 py-1 bg-emerald-950 text-emerald-400 border border-emerald-700 font-semibold flex items-center gap-1.5 transition';
+        document.getElementById('btn-mode-sim').className = 'px-3 py-1 text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition';
+      } else {
+        document.getElementById('btn-mode-sim').className = 'px-3 py-1 bg-purple-950 text-purple-300 border border-purple-700 font-semibold flex items-center gap-1.5 transition';
+        document.getElementById('btn-mode-live').className = 'px-3 py-1 text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition';
+      }
+    }
+
+    function exportCSV() {
+      const headers = ['wallet_address', 'fir_number', 'hops', 'amount_eth', 'amount_inr', 'destination_vasp', 'typology', 'status'];
+      const rows = LEDGER_DATA.map(r => [r.wallet, r.fir, r.hop, r.eth, r.inr.replace(/,/g, ''), r.vasp, r.type, r.status]);
+      const csv = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const a = document.createElement('a');
+      a.href = encodeURI(csv);
+      a.download = `I4C_Attribution_Ledger_${Date.now()}.csv`;
+      a.click();
+    }
+
+    // Keyboard Shortcuts (Esc to close drawer/modal, Ctrl+Enter to load)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeDrawer();
+        closeNoticeModal();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        loadCrimeRingCase();
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderLedger();
+      selectNode('hub');
+    });
+  </script>
+</body>
+</html>
