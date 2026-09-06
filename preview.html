@@ -307,40 +307,57 @@
       </div>
     </section>
 
-    <!-- 7. COLLAPSIBLE DEEP TECHNICAL FORENSIC INSPECTOR -->
-    <section class="bg-[#0D1117] border border-[#30363D] rounded overflow-hidden">
-      <div onclick="toggleDeepInspector()" class="p-4 flex items-center justify-between cursor-pointer hover:bg-[#161B22]/50 transition border-b border-[#30363D]">
+    <!-- 7. INTERACTIVE GRAPHICAL TRANSACTION TOPOLOGY CANVAS -->
+    <section class="bg-[#0D1117] border border-[#30363D] rounded overflow-hidden shadow-xl">
+      <div class="p-4 flex items-center justify-between border-b border-[#30363D] bg-[#161B22]">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded bg-blue-950/60 border border-blue-700/60 flex items-center justify-center text-blue-400">
             <i class="fa-solid fa-network-wired text-sm"></i>
           </div>
           <div>
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
-              Advanced Investigation Inspector (Graph Topology & Raw Ledger)
-            </h3>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                Graphical Transaction Topology Canvas
+              </h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded">
+                Live Dynamic Graph
+              </span>
+            </div>
             <p class="text-xs text-slate-400">
-              Interactive node clustering, transaction hashes, and on-click wallet drawer for in-depth forensic testimony
+              Interactive visual graph of money flow from victim wallet &rarr; intermediary mules &rarr; identified exchange endpoint
             </p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <span id="lbl-toggle-status" class="text-xs font-mono text-slate-400 hidden sm:inline-block">Click to expand</span>
-          <div class="p-1.5 rounded bg-[#161B22] border border-[#30363D] text-slate-300">
-            <i id="inspector-chevron" class="fa-solid fa-chevron-down text-xs"></i>
+        <div class="flex items-center gap-3 text-xs font-mono">
+          <span id="graph-stats-lbl" class="text-blue-400 font-semibold">3 Nodes • 2 Edges</span>
+          <div class="hidden sm:flex items-center gap-1 bg-[#090C10] border border-[#30363D] p-0.5 rounded">
+            <button onclick="zoomGraph(1.15)" class="px-2 py-1 text-slate-300 hover:text-white" title="Zoom In"><i class="fa-solid fa-plus text-[10px]"></i></button>
+            <button onclick="zoomGraph(0.85)" class="px-2 py-1 text-slate-300 hover:text-white" title="Zoom Out"><i class="fa-solid fa-minus text-[10px]"></i></button>
+            <button onclick="resetGraphZoom()" class="px-2 py-1 text-slate-300 hover:text-white" title="Reset"><i class="fa-solid fa-rotate-left text-[10px]"></i></button>
           </div>
         </div>
       </div>
 
-      <div id="deep-inspector-content" class="hidden p-4 space-y-4">
+      <div id="deep-inspector-content" class="p-4 space-y-4">
         <!-- Interactive Canvas -->
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-mono text-slate-400 uppercase">Interactive Multi-Hop Graph (Click any node to inspect)</span>
-            <span id="graph-stats-lbl" class="text-xs font-mono text-blue-400">3 Nodes • 2 Edges</span>
+          <!-- Canvas Legend Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs font-mono">
+            <div class="flex items-center gap-3 bg-[#161B22] border border-[#30363D] px-3 py-1 rounded text-[11px]">
+              <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Victim Origin</span>
+              <span class="text-slate-600">|</span>
+              <span class="flex items-center gap-1 text-amber-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Layering Mule</span>
+              <span class="text-slate-600">|</span>
+              <span class="flex items-center gap-1 text-purple-400"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Syndicate Hub</span>
+              <span class="text-slate-600">|</span>
+              <span class="flex items-center gap-1 text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Target Exchange</span>
+            </div>
+            <span class="text-[11px] text-slate-400">Tip: Click any node to open full forensic intelligence drawer</span>
           </div>
-          <div class="relative w-full h-[380px] bg-[#090C10] border border-[#30363D] rounded overflow-hidden">
-            <svg id="network-svg" class="w-full h-full">
+
+          <div class="relative w-full h-[400px] bg-[#090C10] border border-[#30363D] rounded overflow-hidden">
+            <svg id="network-svg" class="w-full h-full" viewBox="0 0 1000 380" preserveAspectRatio="xMidYMid meet">
               <!-- Dynamically populated SVG nodes & edges -->
             </svg>
           </div>
@@ -822,47 +839,228 @@
       renderLedgerTable(steps, { fir: "CONSOLIDATED-SYNDICATE-2026", nearestVasp: "Binance Hot Wallet 6" });
     }
 
-    // Render SVG Graph
+    // Graph Zoom State
+    let graphZoom = 1;
+    function zoomGraph(factor) {
+      graphZoom = Math.max(0.6, Math.min(2.0, graphZoom * factor));
+      const g = document.getElementById('graph-zoom-group');
+      if (g) g.setAttribute('transform', `scale(${graphZoom})`);
+    }
+    function resetGraphZoom() {
+      graphZoom = 1;
+      const g = document.getElementById('graph-zoom-group');
+      if (g) g.setAttribute('transform', 'scale(1)');
+    }
+
+    // Render SVG Graph (Full Graphical Representation of Transactions)
     function renderSvgGraph(steps) {
       const svg = document.getElementById('network-svg');
+      if (!svg) return;
+
+      if (currentActiveChain === 'syndicate') {
+        renderSyndicateSvgGraph();
+        return;
+      }
+
       const count = steps.length;
-      document.getElementById('graph-stats-lbl').innerText = `${count} Nodes • ${count - 1} Edges`;
+      document.getElementById('graph-stats-lbl').innerText = `${count} Nodes • ${count - 1} Directed Edges`;
+
+      const xCoords = [180, 500, 820];
+      const yCoord = 190;
 
       let svgHtml = `
         <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#3B82F6" />
+          <marker id="arrow-blue" viewBox="0 0 10 10" refX="32" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#38BDF8" />
           </marker>
+          <filter id="node-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
         </defs>
+        <g id="graph-zoom-group" transform="scale(${graphZoom})" transform-origin="center">
       `;
 
-      // Edges
+      // Draw Animated Directed Edges
       for (let i = 0; i < count - 1; i++) {
-        const x1 = 150 + i * 320;
-        const x2 = 150 + (i + 1) * 320;
+        const x1 = xCoords[i];
+        const x2 = xCoords[i + 1];
+        const txSnippet = steps[i + 1].txHash ? `${steps[i + 1].txHash.substring(0, 8)}...` : '0x7711...';
+        const vol = steps[i + 1].volume || '5.08 ETH';
+
         svgHtml += `
-          <line x1="${x1}" y1="180" x2="${x2}" y2="180" stroke="#3B82F6" stroke-width="2" class="animate-flow" marker-end="url(#arrow)" />
-          <text x="${(x1 + x2) / 2}" y="165" fill="#94A3B8" font-size="10" font-family="monospace" text-anchor="middle">Hop ${i + 1} Transit</text>
+          <!-- Glowing underlay line -->
+          <line x1="${x1}" y1="${yCoord}" x2="${x2}" y2="${yCoord}" stroke="#0284C7" stroke-width="6" opacity="0.25" />
+          <!-- Animated flow line -->
+          <line x1="${x1}" y1="${yCoord}" x2="${x2}" y2="${yCoord}" stroke="#38BDF8" stroke-width="2.5" class="animate-flow" marker-end="url(#arrow-blue)" />
+          
+          <!-- In-Transit Transaction Badge -->
+          <g transform="translate(${(x1 + x2) / 2}, ${yCoord - 28})">
+            <rect x="-70" y="-12" width="140" height="24" rx="4" fill="#0D1117" stroke="#30363D" stroke-width="1.2" />
+            <text x="0" y="3" fill="#38BDF8" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">Hop #${i + 1}: ${vol}</text>
+            <text x="0" y="24" fill="#94A3B8" font-size="9" font-family="monospace" text-anchor="middle">Tx: ${txSnippet}</text>
+          </g>
         `;
       }
 
-      // Nodes
+      // Draw Graphical Nodes
       steps.forEach((s, idx) => {
-        const x = 150 + idx * 320;
-        const color = s.type === 'vasp' ? '#10B981' : s.type === 'mule' ? '#F59E0B' : '#3B82F6';
+        const x = xCoords[idx];
+        const isVasp = s.type === 'vasp';
+        const isMule = s.type === 'mule';
+        const color = isVasp ? '#10B981' : isMule ? '#F59E0B' : '#3B82F6';
+        const glowColor = isVasp ? 'rgba(16, 185, 129, 0.4)' : isMule ? 'rgba(245, 158, 11, 0.4)' : 'rgba(59, 130, 246, 0.4)';
+        const roleLabel = isVasp ? 'TARGET VASP' : isMule ? 'INTERMEDIARY MULE' : 'VICTIM ORIGIN';
+        const entityShort = s.entity.length > 20 ? s.entity.substring(0, 18) + '...' : s.entity;
+
         svgHtml += `
-          <g onclick="openNodeInspector(${idx})" class="cursor-pointer">
-            <circle cx="${x}" cy="180" r="22" fill="#0D1117" stroke="${color}" stroke-width="3" />
-            <circle cx="${x}" cy="180" r="8" fill="${color}" />
-            <text x="${x}" y="225" fill="#F1F5F9" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">${s.role}</text>
-            <text x="${x}" y="240" fill="#94A3B8" font-size="9" font-family="monospace" text-anchor="middle">${s.address.substring(0, 10)}...</text>
-            <text x="${x}" y="255" fill="${color}" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">${s.volume}</text>
+          <g onclick="openNodeInspector(${idx})" class="cursor-pointer group">
+            <!-- Ambient Glow Outer Circle -->
+            <circle cx="${x}" cy="${yCoord}" r="38" fill="${color}" opacity="0.12" filter="url(#node-glow)" />
+            
+            <!-- Main Node Circle -->
+            <circle cx="${x}" cy="${yCoord}" r="28" fill="#0D1117" stroke="${color}" stroke-width="3" />
+            
+            <!-- Inner Center Circle -->
+            <circle cx="${x}" cy="${yCoord}" r="12" fill="${color}" opacity="0.9" />
+
+            <!-- Role Badge Pill Above -->
+            <g transform="translate(${x}, ${yCoord - 48})">
+              <rect x="-55" y="-9" width="110" height="18" rx="3" fill="#161B22" stroke="${color}" stroke-width="1" />
+              <text x="0" y="3" fill="${color}" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">${roleLabel}</text>
+            </g>
+
+            <!-- Entity Label Below -->
+            <text x="${x}" y="${yCoord + 48}" fill="#F1F5F9" font-size="12" font-weight="bold" font-family="sans-serif" text-anchor="middle">${entityShort}</text>
+            
+            <!-- Wallet Address Snippet -->
+            <g transform="translate(${x}, ${yCoord + 65})">
+              <rect x="-55" y="-8" width="110" height="16" rx="2" fill="#161B22" stroke="#30363D" />
+              <text x="0" y="4" fill="#94A3B8" font-size="9" font-family="monospace" text-anchor="middle">${s.address.substring(0, 12)}...</text>
+            </g>
+
+            <!-- Value Badge -->
+            <text x="${x}" y="${yCoord + 95}" fill="${color}" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">${s.volume}</text>
+            <text x="${x}" y="${yCoord + 110}" fill="#94A3B8" font-size="9" font-family="monospace" text-anchor="middle">${s.inr || ''}</text>
           </g>
         `;
       });
 
+      svgHtml += `</g>`;
       svg.innerHTML = svgHtml;
     }
+
+    // Render Syndicate Convergence SVG Graph (5 Victims -> 2 Mules -> Hub -> Binance)
+    function renderSyndicateSvgGraph() {
+      const svg = document.getElementById('network-svg');
+      if (!svg) return;
+
+      document.getElementById('graph-stats-lbl').innerText = `9 Nodes • 8 Directed Edges (Cross-Jurisdiction Convergence)`;
+
+      const victims = [
+        { label: "Victim 1 (Delhi)", amt: "5.0 ETH", y: 55, muleIdx: 0 },
+        { label: "Victim 2 (Bengaluru)", amt: "7.5 ETH", y: 115, muleIdx: 0 },
+        { label: "Victim 3 (Mumbai)", amt: "10.0 ETH", y: 175, muleIdx: 0 },
+        { label: "Victim 4 (Hyderabad)", amt: "4.0 ETH", y: 235, muleIdx: 1 },
+        { label: "Victim 5 (Pune)", amt: "11.95 ETH", y: 295, muleIdx: 1 },
+      ];
+
+      const mules = [
+        { label: "Mule Layer 1A", amt: "22.5 ETH", x: 380, y: 115 },
+        { label: "Mule Layer 1B", amt: "15.95 ETH", x: 380, y: 245 },
+      ];
+
+      const hub = { label: "Syndicate Hub (0x9b48...a100)", amt: "38.45 ETH", x: 670, y: 180 };
+      const vasp = { label: "Binance Hot Wallet 6", amt: "38.45 ETH (₹92.28L)", x: 910, y: 180 };
+
+      let svgHtml = `
+        <defs>
+          <marker id="arrow-red" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#EF4444" />
+          </marker>
+          <marker id="arrow-amber" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#F59E0B" />
+          </marker>
+        </defs>
+        <g id="graph-zoom-group" transform="scale(${graphZoom})" transform-origin="center">
+      `;
+
+      // Edges: Victims to Mules
+      victims.forEach((v) => {
+        const targetMule = mules[v.muleIdx];
+        svgHtml += `
+          <path d="M 120 ${v.y} C 250 ${v.y}, 260 ${targetMule.y}, ${targetMule.x} ${targetMule.y}" fill="none" stroke="#EF4444" stroke-width="1.8" class="animate-flow" marker-end="url(#arrow-red)" opacity="0.8" />
+        `;
+      });
+
+      // Edges: Mules to Hub
+      mules.forEach((m) => {
+        svgHtml += `
+          <path d="M ${m.x} ${m.y} C 520 ${m.y}, 540 ${hub.y}, ${hub.x} ${hub.y}" fill="none" stroke="#F59E0B" stroke-width="2.5" class="animate-flow" marker-end="url(#arrow-amber)" />
+        `;
+      });
+
+      // Edge: Hub to Binance
+      svgHtml += `
+        <line x1="${hub.x}" y1="${hub.y}" x2="${vasp.x}" y2="${vasp.y}" stroke="#A855F7" stroke-width="4" class="animate-flow" />
+        <line x1="${hub.x}" y1="${hub.y}" x2="${vasp.x}" y2="${vasp.y}" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-red)" />
+        
+        <g transform="translate(${(hub.x + vasp.x) / 2}, ${hub.y - 18})">
+          <rect x="-60" y="-10" width="120" height="20" rx="3" fill="#161B22" stroke="#A855F7" />
+          <text x="0" y="4" fill="#E9D5FF" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">Cash-out: 38.45 ETH</text>
+        </g>
+      `;
+
+      // Render Victim Nodes
+      victims.forEach((v, idx) => {
+        svgHtml += `
+          <g onclick="openNodeInspector(0)" class="cursor-pointer">
+            <circle cx="120" cy="${v.y}" r="16" fill="#0D1117" stroke="#EF4444" stroke-width="2.5" />
+            <circle cx="120" cy="${v.y}" r="6" fill="#EF4444" />
+            <text x="145" y="${v.y + 4}" fill="#F1F5F9" font-size="10" font-weight="bold" font-family="sans-serif">${v.label}</text>
+            <text x="145" y="${v.y + 16}" fill="#EF4444" font-size="9" font-family="monospace">${v.amt}</text>
+          </g>
+        `;
+      });
+
+      // Render Mule Nodes
+      mules.forEach((m, idx) => {
+        svgHtml += `
+          <g onclick="openNodeInspector(1)" class="cursor-pointer">
+            <circle cx="${m.x}" cy="${m.y}" r="22" fill="#0D1117" stroke="#F59E0B" stroke-width="3" />
+            <circle cx="${m.x}" cy="${m.y}" r="8" fill="#F59E0B" />
+            <text x="${m.x}" y="${m.y + 36}" fill="#FCD34D" font-size="10" font-weight="bold" font-family="sans-serif" text-anchor="middle">${m.label}</text>
+            <text x="${m.x}" y="${m.y + 49}" fill="#94A3B8" font-size="9" font-family="monospace" text-anchor="middle">${m.amt}</text>
+          </g>
+        `;
+      });
+
+      // Render Syndicate Hub Node
+      svgHtml += `
+        <g onclick="openNodeInspector(1)" class="cursor-pointer">
+          <circle cx="${hub.x}" cy="${hub.y}" r="30" fill="#0D1117" stroke="#A855F7" stroke-width="3.5" />
+          <circle cx="${hub.x}" cy="${hub.y}" r="12" fill="#A855F7" />
+          <text x="${hub.x}" y="${hub.y - 38}" fill="#D8B4FE" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">CONVERGENCE HUB</text>
+          <text x="${hub.x}" y="${hub.y + 46}" fill="#FFFFFF" font-size="11" font-weight="bold" font-family="sans-serif" text-anchor="middle">Syndicate Hub</text>
+          <text x="${hub.x}" y="${hub.y + 60}" fill="#A855F7" font-size="9" font-family="monospace" text-anchor="middle">0x9b48...a100</text>
+        </g>
+      `;
+
+      // Render Target VASP Node
+      svgHtml += `
+        <g onclick="openNodeInspector(2)" class="cursor-pointer">
+          <circle cx="${vasp.x}" cy="${vasp.y}" r="32" fill="#0D1117" stroke="#10B981" stroke-width="4" />
+          <circle cx="${vasp.x}" cy="${vasp.y}" r="14" fill="#10B981" />
+          <text x="${vasp.x}" y="${vasp.y - 40}" fill="#6EE7B7" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">TARGET VASP (FREEZE)</text>
+          <text x="${vasp.x}" y="${vasp.y + 48}" fill="#FFFFFF" font-size="11" font-weight="bold" font-family="sans-serif" text-anchor="middle">Binance Hot Wallet 6</text>
+          <text x="${vasp.x}" y="${vasp.y + 62}" fill="#10B981" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">${vasp.amt}</text>
+        </g>
+      `;
+
+      svgHtml += `</g>`;
+      svg.innerHTML = svgHtml;
+    }
+
 
     // Render Ledger Table
     function renderLedgerTable(steps, parentData) {

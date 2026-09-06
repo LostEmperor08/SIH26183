@@ -46,8 +46,8 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState(null);
   const [copiedText, setCopiedText] = useState(null);
 
-  // Deep technical inspector toggle
-  const [showDeepInspector, setShowDeepInspector] = useState(false);
+  // Deep technical inspector toggle (Default true so graph canvas is immediately visible)
+  const [showDeepInspector, setShowDeepInspector] = useState(true);
 
   // Active case state for graph & ledger
   const [activeGraphCase, setActiveGraphCase] = useState(() =>
