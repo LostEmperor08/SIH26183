@@ -154,29 +154,38 @@ def get_outgoing_txs(wallet_address: str, max_results: int = 500):
     # 3. If EVM address (0x...) query Etherscan API V2 (Ethereum chainid=1, then Polygon chainid=137)
     if wallet_address_clean.startswith('0x') and ETHERSCAN_API_KEY:
         for chain_id in [1, 137]:
-            params = {
-                'chainid': chain_id,
-                'module': 'account',
-                'action': 'txlist',
-                'address': wallet_address_clean,
-                'startblock': 0,
-                'endblock': 99999999,
-                'sort': 'desc',
-                'apikey': ETHERSCAN_API_KEY
-            }
-            try:
-                response = requests.get(ETHERSCAN_V2_URL, params=params, timeout=8)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get('status') == '1' and isinstance(data.get('result'), list):
-                        txs = [
-                            tx for tx in data['result'][:max_results]
-                            if tx.get('from', '').lower() == wallet_address_lower
-                        ]
-                        if txs:
-                            return txs
-            except Exception as e:
-                print(f"Etherscan V2 Exception (chainid={chain_id}) for {wallet_address_clean}: {e}")
+            for action in ['txlist', 'tokentx']:
+                params = {
+                    'chainid': chain_id,
+                    'module': 'account',
+                    'action': action,
+                    'address': wallet_address_clean,
+                    'startblock': 0,
+                    'endblock': 99999999,
+                    'sort': 'desc',
+                    'apikey': ETHERSCAN_API_KEY
+                }
+                try:
+                    response = requests.get(ETHERSCAN_V2_URL, params=params, timeout=8)
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data.get('status') == '1' and isinstance(data.get('result'), list):
+                            txs = []
+                            for tx in data['result'][:max_results]:
+                                if tx.get('from', '').lower() == wallet_address_lower:
+                                    val = tx.get('value', '0')
+                                    decimals = int(tx.get('tokenDecimal', 18)) if 'tokenDecimal' in tx else 18
+                                    if decimals < 18:
+                                        try:
+                                            val = str(int(val) * 10**(18 - decimals))
+                                        except (ValueError, TypeError):
+                                            pass
+                                    tx['value'] = val
+                                    txs.append(tx)
+                            if txs:
+                                return txs
+                except Exception as e:
+                    print(f"Etherscan V2 Exception ({action} chainid={chain_id}) for {wallet_address_clean}: {e}")
 
     # 4. Fallback if no transactions found
     return []

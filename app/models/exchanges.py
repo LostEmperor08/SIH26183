@@ -139,6 +139,31 @@ EXCHANGE_WALLETS = {
         "risk_category": "VASP - Tier 1",
         "compliance_email": "compliance@binance.com",
     },
+    # Verified Polygon PoS Network Exchange Wallets
+    "0xe7804c37c13166ff0b37f5ae0bb07a3aebb6e245": {
+        "name": "Binance (Polygon Hot Wallet)",
+        "exchange": "Binance",
+        "jurisdiction": "International / FIU Reporting Entity",
+        "fiu_registered": True,
+        "risk_category": "VASP - Tier 1",
+        "compliance_email": "compliance@binance.com",
+    },
+    "0x72a53cd42eb1b5055835107502f5045608c0a54f": {
+        "name": "CoinDCX India (Polygon Domestic)",
+        "exchange": "CoinDCX",
+        "jurisdiction": "India (FIU-IND Reg. Entity)",
+        "fiu_registered": True,
+        "risk_category": "Domestic Registered VASP",
+        "compliance_email": "nodal-lea@coindcx.com",
+    },
+    "0x5bdf85216ec1e38d6458c87099406d38621345fe": {
+        "name": "WazirX India (Polygon Hot Wallet)",
+        "exchange": "WazirX",
+        "jurisdiction": "India (FIU-IND Reg. Entity)",
+        "fiu_registered": True,
+        "risk_category": "Domestic Registered VASP",
+        "compliance_email": "lawenforcement@wazirx.com",
+    },
 }
 
 def detect_blockchain_network(address: str) -> str:
