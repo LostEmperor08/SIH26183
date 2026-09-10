@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AEGIS // Real-Time Crypto Fraud Attribution System</title>
-  <meta name="description" content="Enterprise-grade law enforcement cryptocurrency fraud attribution and asset recovery platform for I4C and State Cyber Police cells.">
+  <title>TraceGrid // Real-Time Crypto Fraud Attribution System (I4C)</title>
+  <meta name="description" content="TraceGrid - Command Center for cryptocurrency fraud attribution and statutory asset recovery for Indian Law Enforcement Agencies (I4C, State Police Cyber Cells).">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,542 +15,1125 @@
         extend: {
           colors: {
             brand: {
-              50: '#EFF6FF',
-              100: '#DBEAFE',
-              500: '#3B82F6',
-              600: '#2563EB',
-              700: '#1D4ED8',
+              gold: '#D7B866',
+              cyan: '#59E1DC',
+              emerald: '#52D59D',
+              blue: '#6D9DFF',
+              red: '#FF6676',
+              amber: '#F4B86B',
+              violet: '#B58BFF',
             }
           },
           fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+            sans: ['Manrope', 'Inter', '-apple-system', 'sans-serif'],
+            mono: ['DM Mono', 'JetBrains Mono', 'ui-monospace', 'monospace'],
           }
         }
       }
     }
   </script>
 
-  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <!-- Google Fonts: Manrope & DM Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- FontAwesome 6 Icons -->
+  <!-- FontAwesome 6 & Lucide Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
+    :root {
+      --bg: #06120e;
+      --panel: rgba(13, 35, 27, 0.76);
+      --line: rgba(202, 180, 109, 0.18);
+      --muted: #90a096;
+      --cyan: #d7b866;
+      --blue: #88b9a2;
+      --gold: #d7b866;
+    }
+
     body {
-      background-color: #090D16;
-      color: #E2E8F0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      min-width: 320px;
+      color: #e8eef8;
+      background: radial-gradient(circle at 79% 2%, #173c2c 0, #0b241b 25%, #06120e 60%), var(--bg);
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-    
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.25;
+      background: repeating-linear-gradient(115deg, transparent 0 13px, rgba(218, 193, 119, 0.022) 14px, transparent 15px);
+      mask-image: linear-gradient(to bottom, #000, transparent 80%);
+      z-index: 1;
+    }
+
     .font-mono {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'DM Mono', 'JetBrains Mono', monospace;
       font-feature-settings: "tnum" 1, "zero" 1;
     }
 
-    /* Custom slim scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #090D16; }
-    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+      overflow: hidden;
+      background-image: linear-gradient(rgba(105, 154, 202, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(105, 154, 202, 0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
 
-    /* Animated dash line for SVG transaction flows */
+    /* Sidebar */
+    .sidebar {
+      width: 248px;
+      flex: 0 0 248px;
+      border-right: 1px solid var(--line);
+      padding: 26px 16px 18px;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, rgba(7, 25, 18, 0.88), rgba(5, 17, 13, 0.68));
+      backdrop-filter: blur(20px);
+      z-index: 30;
+      position: relative;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 32px;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      color: var(--cyan);
+      border: 1px solid rgba(215, 184, 102, 0.62);
+      border-radius: 50%;
+      background: linear-gradient(145deg, rgba(215, 184, 102, 0.2), rgba(215, 184, 102, 0.03));
+      box-shadow: 0 0 20px rgba(215, 184, 102, 0.14);
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 16px;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    .brand strong span {
+      color: var(--cyan);
+    }
+
+    .brand small {
+      color: #6c8198;
+      font-size: 8.5px;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      font-family: "DM Mono", monospace;
+    }
+
+    .nav-label {
+      color: #64819e;
+      font: 500 10px "DM Mono", monospace;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      padding: 0 12px 11px;
+    }
+
+    .nav-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 0;
+      border-radius: 9px;
+      color: #91a59b;
+      background: transparent;
+      text-align: left;
+      padding: 10px 12px;
+      margin: 2px 0;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      color: #f4e8c2;
+      background: rgba(215, 184, 102, 0.08);
+      transform: translateX(3px);
+    }
+
+    .nav-item.active {
+      color: var(--cyan);
+      background: linear-gradient(90deg, rgba(215, 184, 102, 0.16), rgba(215, 184, 102, 0.025));
+      box-shadow: inset 2px 0 var(--cyan);
+    }
+
+    .nav-item em {
+      margin-left: auto;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font: 10px "DM Mono", monospace;
+      color: #e8b76b;
+      background: rgba(231, 171, 84, 0.12);
+      font-style: normal;
+    }
+
+    /* Live Dot */
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: #52d59d;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 11px #52d59d;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Glass Panels */
+    .glass-panel {
+      background: linear-gradient(140deg, rgba(17, 48, 36, 0.77), rgba(7, 25, 19, 0.62));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), inset 0 1px rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(18px);
+      transition: border-color 0.35s, transform 0.35s, box-shadow 0.35s;
+    }
+
+    .glass-panel:hover {
+      border-color: rgba(215, 184, 102, 0.31);
+      box-shadow: 0 22px 65px rgba(0, 0, 0, 0.24), inset 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 72px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(4, 18, 12, 0.4);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    /* Hero Section */
+    .hero-metric {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px 9px 17px;
+      border-left: 1px solid rgba(215, 184, 102, 0.25);
+      background: rgba(215, 184, 102, 0.03);
+      border-radius: 0 12px 12px 0;
+    }
+
+    .metric-orbit {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(215, 184, 102, 0.72);
+      border-radius: 50%;
+      color: var(--cyan);
+      box-shadow: 0 0 22px rgba(215, 184, 102, 0.13);
+      animation: rotate-slow 14s linear infinite;
+    }
+
+    /* Trace Panel Sweep Effect */
+    .trace-panel {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .trace-panel::after {
+      content: "";
+      position: absolute;
+      left: -25%;
+      right: -25%;
+      top: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      animation: sweep 5s ease-in-out infinite;
+    }
+
+    /* Flow Canvas Scanning Beam */
+    .flow-canvas {
+      position: relative;
+      height: 340px;
+      overflow: hidden;
+      border: 1px solid rgba(215, 184, 102, 0.17);
+      border-radius: 12px;
+      background: rgba(3, 15, 10, 0.43);
+    }
+
+    .flow-canvas::after {
+      content: "";
+      position: absolute;
+      inset: -100% 0 auto;
+      height: 60%;
+      background: linear-gradient(transparent, rgba(215, 184, 102, 0.07), transparent);
+      animation: scan 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .flow-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.35;
+      background-image: linear-gradient(rgba(103, 149, 187, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(103, 149, 187, 0.08) 1px, transparent 1px);
+      background-size: 38px 38px;
+    }
+
+    /* Graph Nodes */
+    .graph-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px 9px 9px;
+      min-width: 124px;
+      border: 1px solid;
+      border-radius: 10px;
+      background: rgba(13, 40, 28, 0.94);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      z-index: 2;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .graph-node:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+    }
+
+    .node-suspect { border-color: rgba(255, 102, 118, 0.6); }
+    .node-suspect .node-icon { color: #ff6676; background: rgba(255, 102, 118, 0.16); }
+    
+    .node-layer { border-color: rgba(244, 184, 107, 0.5); }
+    .node-layer .node-icon { color: #f4b86b; background: rgba(244, 184, 107, 0.14); }
+
+    .node-bridge { border-color: rgba(181, 139, 255, 0.55); }
+    .node-bridge .node-icon { color: #b58bff; background: rgba(181, 139, 255, 0.16); }
+
+    .node-vasp { border-color: rgba(82, 213, 157, 0.7); box-shadow: 0 0 20px rgba(82, 213, 157, 0.15); }
+    .node-vasp .node-icon { color: #52d59d; background: rgba(82, 213, 157, 0.18); }
+
+    /* Animations */
+    @keyframes breathe {
+      0%, 100% { box-shadow: 0 0 14px rgba(215, 184, 102, 0.12); }
+      50% { box-shadow: 0 0 27px rgba(215, 184, 102, 0.28); }
+    }
+
+    @keyframes rotate-slow {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes sweep {
+      0%, 100% { transform: translateX(-25%); opacity: 0.1; }
+      50% { transform: translateX(25%); opacity: 0.75; }
+    }
+
+    @keyframes scan {
+      0%, 100% { transform: translateY(-20%); opacity: 0; }
+      25%, 70% { opacity: 1; }
+      85% { transform: translateY(270%); opacity: 0; }
+    }
+
     @keyframes flowDash {
       to { stroke-dashoffset: -24; }
     }
+
     .animate-flow {
       stroke-dasharray: 6 6;
       animation: flowDash 1.2s linear infinite;
     }
 
-    /* Subtle backdrop blur */
-    .glass-nav {
-      background: rgba(9, 13, 22, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #06120e; }
+    ::-webkit-scrollbar-thumb { background: #173c2c; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #265942; }
+
+    /* Mobile Responsive Sidebar */
+    @media (max-width: 900px) {
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .sidebar-open {
+        transform: translateX(0);
+      }
     }
   </style>
 </head>
 
-<body class="min-h-screen flex flex-col bg-[#090D16] text-slate-200 antialiased selection:bg-blue-600/30 selection:text-blue-200">
+<body class="min-h-screen select-none">
 
-  <!-- TOP SLIM NAVIGATION BAR -->
-  <header class="sticky top-0 z-40 w-full border-b border-slate-800/80 glass-nav">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+  <!-- APP SHELL -->
+  <div class="app-shell relative">
+
+    <!-- 1. LEFT COMMAND SIDEBAR -->
+    <aside id="sidebar-drawer" class="sidebar">
       
-      <!-- Brand & Entity -->
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shadow-sm">
-          <i class="fa-solid fa-shield-halved text-sm"></i>
+      <!-- Brand Identity -->
+      <div class="brand">
+        <div class="brand-mark">
+          <i class="fa-solid fa-radar text-sm"></i>
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold tracking-tight text-white font-sans">AEGIS TRACE</span>
-            <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700/50">
-              I4C / CIS-26183
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-400 hidden sm:block">
-            Crypto Fraud Attribution & Statutory Asset Recovery
-          </p>
+          <strong>trace<span>grid</span></strong>
+          <small>I4C intelligence layer</small>
         </div>
+        <button onclick="toggleMobileSidebar()" class="md:hidden ml-auto text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
-      <!-- Center Navigation Links -->
-      <nav class="hidden md:flex items-center gap-1 text-xs font-medium text-slate-400">
-        <a href="#dashboard" class="px-3 py-1.5 rounded-lg text-white bg-slate-800/60 font-medium transition">Dashboard</a>
-        <a href="#trace-section" class="px-3 py-1.5 rounded-lg hover:text-slate-200 hover:bg-slate-800/40 transition">Trace Wallet</a>
-        <a href="#topology-section" class="px-3 py-1.5 rounded-lg hover:text-slate-200 hover:bg-slate-800/40 transition">Graph Topology</a>
-        <a href="#ledger-section" class="px-3 py-1.5 rounded-lg hover:text-slate-200 hover:bg-slate-800/40 transition">Evidence Ledger</a>
-        <a href="javascript:void(0)" onclick="openFreezeNoticeModal()" class="px-3 py-1.5 rounded-lg hover:text-slate-200 hover:bg-slate-800/40 transition">Section 91 Notice</a>
+      <!-- Navigation Section 1: Workspace -->
+      <div class="nav-label">Workspace</div>
+      <nav class="space-y-1">
+        <button onclick="switchTab('dashboard')" id="nav-tab-dashboard" class="nav-item active">
+          <i class="fa-solid fa-table-cells-large text-xs w-4"></i>
+          <span>Dashboard</span>
+        </button>
+        <button onclick="switchTab('investigations')" id="nav-tab-investigations" class="nav-item">
+          <i class="fa-solid fa-folder-open text-xs w-4"></i>
+          <span>Investigations</span>
+          <em>03</em>
+        </button>
+        <button onclick="switchTab('ledger')" id="nav-tab-ledger" class="nav-item">
+          <i class="fa-solid fa-receipt text-xs w-4"></i>
+          <span>Evidence Ledger</span>
+        </button>
+        <button onclick="openFreezeNoticeModal()" class="nav-item">
+          <i class="fa-solid fa-file-shield text-xs w-4"></i>
+          <span>Section 91 Notice</span>
+        </button>
       </nav>
 
-      <!-- Right Controls: Status & Mode Switch -->
-      <div class="flex items-center gap-3">
-        <!-- Live Node Telemetry Indicator -->
-        <div class="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>RPC Telemetry: <strong class="text-slate-200 font-medium">Synced</strong></span>
+      <!-- Navigation Section 2: System -->
+      <div class="nav-label mt-6">System</div>
+      <nav class="space-y-1">
+        <button onclick="showToast('Data sources: Etherscan V2, PolygonScan & TronGrid Connected')" class="nav-item">
+          <i class="fa-solid fa-sliders text-xs w-4"></i>
+          <span>System Settings</span>
+        </button>
+        <button onclick="showToast('Help Center: Ready for SIH26183 Evaluation')" class="nav-item">
+          <i class="fa-regular fa-circle-question text-xs w-4"></i>
+          <span>Help Center</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Bottom: Telemetry & Officer Profile -->
+      <div class="mt-auto pt-4 border-t border-[var(--line)] space-y-3">
+        <div class="flex items-center gap-2 px-2 text-[11px] text-slate-400">
+          <span class="live-dot"></span>
+          <span>All systems operational</span>
         </div>
 
-        <!-- Mode Switch: Live vs Simulation -->
-        <div class="flex items-center p-0.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-          <button id="btn-mode-live" onclick="toggleMode('live')" class="px-3 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 bg-blue-600/20 text-blue-300 border border-blue-500/40">
-            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-            <span>Live Scan</span>
-          </button>
-          <button id="btn-mode-sim" onclick="toggleMode('sim')" class="px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5">
-            <span>Preset Cases</span>
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </header>
-
-  <!-- MAIN CONTENT CONTAINER -->
-  <main id="dashboard" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-    <!-- HERO & PRIMARY COMMAND INPUT SECTION -->
-    <section id="trace-section" class="text-center pt-4 pb-6 space-y-5">
-      <div class="max-w-2xl mx-auto space-y-2">
-        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-          Real-Time Crypto Fraud Attribution
-        </h2>
-        <p class="text-sm text-slate-400">
-          Trace stolen fund hops across Ethereum, Polygon, and Tron to identify destination exchanges and generate legal freeze notices under Section 91 Cr.P.C. / BNSS § 94.
-        </p>
-      </div>
-
-      <!-- Network Segmented Control Pills -->
-      <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
-        <button id="chain-btn-ethereum" onclick="selectChain('ethereum')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-blue-600/20 text-blue-300 border-blue-500/50 shadow-sm">
-          <i class="fa-brands fa-ethereum text-sm text-blue-400"></i>
-          <span>Ethereum (ERC-20)</span>
-        </button>
-        <button id="chain-btn-polygon" onclick="selectChain('polygon')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
-          <i class="fa-solid fa-shapes text-sm text-purple-400"></i>
-          <span>Polygon PoS (USDT)</span>
-        </button>
-        <button id="chain-btn-tron" onclick="selectChain('tron')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
-          <i class="fa-solid fa-bolt text-sm text-red-400"></i>
-          <span>Tron (TRC-20)</span>
-        </button>
-        <button id="chain-btn-syndicate" onclick="selectChain('syndicate')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
-          <i class="fa-solid fa-circle-nodes text-sm text-amber-400"></i>
-          <span>Multi-Victim Syndicate</span>
-        </button>
-      </div>
-
-      <!-- Centered Search Command Bar -->
-      <div class="max-w-3xl mx-auto pt-2">
-        <div class="relative flex items-center rounded-xl bg-slate-900/90 border border-slate-700/70 shadow-xl focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all p-1.5">
-          <div class="pl-3 pr-2 text-slate-400">
-            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+        <button onclick="openAuthModal()" class="w-full flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-[var(--line)] transition text-left group">
+          <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-emerald-400 flex items-center justify-center text-xs font-bold text-white shrink-0">
+            AS
           </div>
-          
-          <input 
-            type="text" 
-            id="search-input" 
-            placeholder="Enter EVM wallet address (0x...) or Tron address (T...)" 
-            value="0x7d8bf3a7ea0145ade82aca353ad2b57a50e94c77"
-            class="flex-1 bg-transparent py-2.5 px-2 text-sm sm:text-base text-slate-100 placeholder-slate-500 focus:outline-none font-mono tracking-tight"
-            onkeydown="if(event.key==='Enter') handleSearch(event)"
-          />
-
-          <button 
-            id="btn-clear-search" 
-            onclick="clearSearchInput()" 
-            title="Clear Input" 
-            class="p-2 text-slate-500 hover:text-slate-300 transition"
-          >
-            <i class="fa-solid fa-xmark text-xs"></i>
-          </button>
-
-          <button 
-            id="btn-search" 
-            onclick="handleSearch(event)" 
-            class="ml-1 bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-medium px-5 py-2.5 rounded-lg shadow-sm transition flex items-center gap-2 shrink-0"
-          >
-            <span>Analyze Wallet</span>
-            <i class="fa-solid fa-arrow-right text-xs"></i>
-          </button>
-        </div>
-
-        <!-- Quick Sample Address Chips -->
-        <div class="flex flex-wrap items-center justify-center gap-2 mt-3 text-xs text-slate-400">
-          <span class="text-slate-500">Quick Test Cases:</span>
-          <button onclick="document.getElementById('search-input').value='0xe6D6947c424AbbAB1C7b3866DC65614EEEC65358'; selectChain('polygon'); handleSearch(event);" class="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:text-blue-300 font-mono text-[11px] transition">
-            <i class="fa-solid fa-wallet text-[10px] mr-1 text-purple-400"></i>Polygon USDT Sweep (0xe6D6...5358)
-          </button>
-          <button onclick="loadPresetCase('ethereum')" class="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:text-blue-300 font-mono text-[11px] transition">
-            <i class="fa-brands fa-ethereum text-[10px] mr-1 text-blue-400"></i>Ethereum Task Scam (FIR-402)
-          </button>
-          <button onclick="loadPresetCase('tron')" class="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:text-blue-300 font-mono text-[11px] transition">
-            <i class="fa-solid fa-bolt text-[10px] mr-1 text-red-400"></i>Tron Pig Butchering (FIR-719)
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- CRIME RING CONVERGENCE BANNER (Displayed for Syndicate Mode) -->
-    <div id="convergence-banner" class="hidden rounded-xl bg-amber-950/30 border border-amber-800/50 p-4 sm:p-5 text-amber-200">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div class="flex items-start gap-3">
-          <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400 mt-0.5">
-            <i class="fa-solid fa-triangle-exclamation text-base"></i>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-semibold text-slate-200 group-hover:text-white truncate" id="analyst-name-display">Analyst console</div>
+            <div class="text-[10px] text-slate-400 truncate">LEA · South zone</div>
           </div>
-          <div>
-            <h3 class="text-sm font-semibold text-amber-100">
-              Syndicate Cluster Detected: 5 Inter-State FIRs Converged
-            </h3>
-            <p class="text-xs text-amber-300/80 mt-0.5">
-              Stolen funds from Delhi, Mumbai, Bengaluru, Hyderabad, and Pune routed through distinct Layer 1 mule addresses and aggregated at Binance Hot Wallet 6.
+          <i class="fa-solid fa-right-to-bracket text-slate-500 group-hover:text-amber-300 text-xs"></i>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- 2. MAIN CONTENT AREA -->
+    <div class="flex-1 flex flex-col min-w-0 relative z-10">
+
+      <!-- TOP COMMAND BAR -->
+      <header class="topbar">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2 text-slate-400 hover:text-white">
+            <i class="fa-solid fa-bars text-sm"></i>
+          </button>
+          <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+            <span>Workspace</span>
+            <i class="fa-solid fa-chevron-right text-[10px] text-slate-600"></i>
+            <strong id="breadcrumb-current" class="text-slate-200 font-medium font-sans">Overview</strong>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Live Telemetry Pill -->
+          <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/70 border border-slate-800 text-[11px] text-slate-300 font-mono">
+            <span class="live-dot"></span>
+            <span>LIVE INDEX <strong>CONNECTED</strong></span>
+          </div>
+
+          <!-- Mode Switch (Live vs Sim) -->
+          <div class="flex items-center p-0.5 rounded-lg bg-slate-950 border border-slate-800 text-xs">
+            <button id="btn-mode-live" onclick="toggleMode('live')" class="px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>Live Scan</span>
+            </button>
+            <button id="btn-mode-sim" onclick="toggleMode('sim')" class="px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5">
+              <span>Preset Cases</span>
+            </button>
+          </div>
+
+          <!-- Notification Bell & Popover Trigger -->
+          <div class="relative">
+            <button onclick="toggleNotifications()" class="relative p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/40 transition">
+              <i class="fa-regular fa-bell text-sm"></i>
+              <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 border border-[#06120e]"></span>
+            </button>
+
+            <!-- Notifications Popover -->
+            <div id="notification-popover" class="hidden absolute right-0 top-11 w-72 p-4 rounded-xl bg-[#0e271d] border border-[var(--line)] shadow-2xl z-50 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <span class="text-xs font-bold text-white">Live Alerts</span>
+                <span class="text-[10px] font-mono text-emerald-400">Online</span>
+              </div>
+              <div class="text-xs text-slate-300 space-y-2">
+                <div class="flex items-start gap-2">
+                  <i class="fa-solid fa-circle-check text-emerald-400 mt-0.5 text-[11px]"></i>
+                  <span>Autonomous multi-chain tracer ready.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                  <i class="fa-solid fa-shield-halved text-blue-400 mt-0.5 text-[11px]"></i>
+                  <span>FIU-IND domestic VASP registry loaded.</span>
+                </div>
+              </div>
+              <button onclick="shareLocation()" class="w-full py-2 px-2.5 rounded-lg bg-[rgba(215,184,102,0.12)] hover:bg-[rgba(215,184,102,0.22)] border border-[rgba(215,184,102,0.3)] text-[var(--gold)] text-[11px] font-semibold flex items-center justify-center gap-2 transition">
+                <i class="fa-solid fa-location-crosshairs text-xs"></i>
+                <span>Record Investigation Location</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Analyst Profile Icon -->
+          <div onclick="openAuthModal()" class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-emerald-400 flex items-center justify-center text-xs font-bold text-white cursor-pointer shadow-sm">
+            AS
+          </div>
+        </div>
+      </header>
+
+      <!-- TAB 1: MAIN DASHBOARD VIEW -->
+      <main id="tab-content-dashboard" class="flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
+
+        <!-- HERO ROW -->
+        <section class="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+          <div class="space-y-2 max-w-2xl">
+            <div class="flex items-center gap-2 text-[10px] uppercase font-mono font-bold tracking-wider text-[var(--cyan)]">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>REAL-TIME CRYPTO INTELLIGENCE</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+              See the money.<br /><span class="text-slate-400">Stop the fraud.</span>
+            </h1>
+            <p class="text-sm text-slate-400 max-w-lg leading-relaxed">
+              Trace suspect wallet addresses across chains and surface the VASP receiving the funds — before they disappear into cash-out networks.
             </p>
           </div>
-        </div>
-        <button onclick="openFreezeNoticeModal()" class="shrink-0 px-3.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 text-xs font-semibold hover:bg-amber-400 transition flex items-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-file-shield text-xs"></i>
-          <span>Multi-FIR Freeze Directive</span>
-        </button>
-      </div>
-    </div>
 
-    <!-- EXECUTIVE VERDICT & INTELLIGENCE CARD -->
-    <section id="verdict-section" class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-6 sm:p-8 shadow-xl space-y-6">
-      
-      <!-- Top Meta Row -->
-      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/70 pb-5">
-        <div class="flex flex-wrap items-center gap-2.5">
-          <span id="verdict-status-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-            <i class="fa-solid fa-check-circle text-xs"></i>
-            <span>VASP ATTRIBUTED • ACTIONABLE</span>
-          </span>
-          <span id="verdict-fir" class="px-2.5 py-1 rounded-full text-xs font-mono text-slate-400 bg-slate-800/60 border border-slate-700/40">
-            FIR-402/2026 (Delhi Cyber Cell)
-          </span>
-          <span id="verdict-chain" class="px-2.5 py-1 rounded-full text-xs font-medium text-blue-400 bg-blue-500/10 border border-blue-500/20">
-            Ethereum Mainnet
-          </span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button id="btn-copy-text" onclick="copyVerdictNarrative()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-800/70 hover:bg-slate-700/70 border border-slate-700/60 transition flex items-center gap-1.5">
-            <i class="fa-regular fa-copy text-xs"></i>
-            <span>Copy Narrative</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Headline & Forensic Narrative -->
-      <div class="space-y-2">
-        <h3 id="verdict-headline" class="text-lg sm:text-xl font-bold tracking-tight text-white leading-snug">
-          Stolen funds totaling 5.08 ETH (₹12,19,200 INR) routed via 1 intermediary mule wallet directly into Kraken Exchange.
-        </h3>
-        <p id="verdict-narrative" class="text-sm text-slate-300 leading-relaxed max-w-4xl">
-          The victim was lured into a Telegram daily rating scam. 5.08 ETH was swiftly layered through 1 intermediary mule wallet before being deposited into Kraken Cold Storage. Funds are held in a custodial account ready for Section 91 CrPC asset freezing.
-        </p>
-      </div>
-
-      <!-- Key Forensic Metrics Grid (6 Minimalist Cards) -->
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-2">
-        
-        <!-- Loss Crypto -->
-        <div class="rounded-xl bg-slate-950/60 border border-slate-800/80 p-4 space-y-1">
-          <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Fraud Volume</div>
-          <div id="metric-loss-crypto" class="text-base sm:text-lg font-bold text-white font-mono">5.08 ETH</div>
-          <div class="text-[11px] text-slate-500">Total traced amount</div>
-        </div>
-
-        <!-- Loss INR -->
-        <div class="rounded-xl bg-slate-950/60 border border-slate-800/80 p-4 space-y-1">
-          <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Estimated Loss</div>
-          <div id="metric-loss-inr" class="text-base sm:text-lg font-bold text-emerald-400 font-mono">₹12,19,200 INR</div>
-          <div class="text-[11px] text-slate-500">Market benchmark</div>
-        </div>
-
-        <!-- Tracing Speed -->
-        <div class="rounded-xl bg-slate-950/60 border border-slate-800/80 p-4 space-y-1">
-          <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Attribution Speed</div>
-          <div id="metric-speed" class="text-base sm:text-lg font-bold text-blue-400 font-mono">12 seconds</div>
-          <div class="text-[11px] text-slate-500">Full hop resolution</div>
-        </div>
-
-        <!-- Destination VASP -->
-        <div class="rounded-xl bg-slate-950/60 border border-slate-800/80 p-4 space-y-1">
-          <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Receiving VASP</div>
-          <div id="metric-vasp" class="text-base sm:text-lg font-bold text-white truncate" title="Kraken Cold Storage 4">Kraken Storage 4</div>
-          <div class="text-[11px] text-slate-500">Identified custody endpoint</div>
-        </div>
-
-        <!-- FIU Status -->
-        <div class="rounded-xl bg-slate-950/60 border border-slate-800/80 p-4 space-y-1">
-          <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">FIU Registration</div>
-          <div id="metric-fiu" class="text-base sm:text-lg font-bold text-amber-400">Offshore Entity</div>
-          <div class="text-[11px] text-slate-500">Jurisdiction compliance</div>
-        </div>
-
-        <!-- SLA Freeze Window -->
-        <div class="rounded-xl bg-slate-950/60 border border-slate-800/80 p-4 space-y-1">
-          <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Freeze SLA</div>
-          <div id="metric-sla" class="text-base sm:text-lg font-bold text-emerald-400">&lt; 45 minutes</div>
-          <div class="text-[11px] text-slate-500">Asset lock advisory</div>
-        </div>
-
-      </div>
-
-      <!-- Action Directives Bar -->
-      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/70">
-        <div class="flex items-center gap-2 text-xs text-slate-400">
-          <i class="fa-solid fa-scale-balanced text-slate-400"></i>
-          <span>Statutory compliance notices prepared pursuant to Section 91 Cr.P.C. / BNSS § 94</span>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <button onclick="toggleDeepInspector()" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700/80 border border-slate-700 transition flex items-center gap-2">
-            <i id="btn-toggle-inspector-icon" class="fa-solid fa-list-check text-xs"></i>
-            <span id="btn-toggle-inspector-text">Forensic Dossier</span>
-          </button>
-          
-          <button onclick="openFreezeNoticeModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition flex items-center gap-2">
-            <i class="fa-solid fa-gavel text-xs"></i>
-            <span>Generate Freeze Order</span>
-          </button>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- DEEP INSPECTOR DOSSIER COLLAPSIBLE SECTION -->
-    <div id="deep-inspector-content" class="hidden rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-4">
-      <div class="flex items-center justify-between">
-        <h4 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-          <i class="fa-solid fa-microscope text-blue-400"></i>
-          <span>Detailed On-Chain Audit Dossier & Counterparty Breakdown</span>
-        </h4>
-        <button onclick="toggleDeepInspector()" class="text-slate-400 hover:text-white text-xs">
-          <i class="fa-solid fa-xmark"></i> Close
-        </button>
-      </div>
-      <div class="text-xs text-slate-400 leading-relaxed">
-        Autonomous tracing evaluated block timestamps, gas parameters, smart contract ERC-20 events, and custodial deposit addresses across the ledger.
-      </div>
-    </div>
-
-    <!-- 3-STEP VISUAL TRAIL ("FOLLOW THE MONEY") -->
-    <section class="space-y-3">
-      <div class="flex items-center justify-between">
-        <div class="space-y-0.5">
-          <h3 class="text-base font-bold text-white tracking-tight">
-            Fund Traversal Pathway ("Follow the Money")
-          </h3>
-          <p class="text-xs text-slate-400">
-            Click any step to inspect the wallet's full on-chain profile and transaction history.
-          </p>
-        </div>
-        <span class="text-xs font-mono text-slate-500">Autonomous 3-Step Hop Trail</span>
-      </div>
-
-      <!-- Stepper Cards Container (Dynamic) -->
-      <div id="stepper-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Injected via renderChainCase() -->
-      </div>
-    </section>
-
-    <!-- INTERACTIVE TOPOLOGY GRAPH -->
-    <section id="topology-section" class="rounded-2xl bg-slate-900/70 border border-slate-800/80 p-6 shadow-xl space-y-4">
-      
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
-            <i class="fa-solid fa-diagram-project text-blue-400 text-sm"></i>
-            <span>Attribution Topology Canvas</span>
-          </h3>
-          <p id="graph-stats-lbl" class="text-xs text-slate-400 mt-0.5">
-            3 Nodes Resolved • 2 On-Chain Transaction Edges
-          </p>
-        </div>
-
-        <!-- Graph Zoom & Controls -->
-        <div class="flex items-center gap-2">
-          <div class="flex items-center rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300">
-            <button onclick="zoomGraph(1.2)" class="px-2.5 py-1.5 hover:text-white transition" title="Zoom In">
-              <i class="fa-solid fa-plus text-xs"></i>
-            </button>
-            <span class="h-4 w-px bg-slate-800"></span>
-            <button onclick="zoomGraph(0.8)" class="px-2.5 py-1.5 hover:text-white transition" title="Zoom Out">
-              <i class="fa-solid fa-minus text-xs"></i>
-            </button>
-            <span class="h-4 w-px bg-slate-800"></span>
-            <button onclick="resetGraphZoom()" class="px-2.5 py-1.5 hover:text-white transition" title="Reset Zoom">
-              <i class="fa-solid fa-rotate-left text-xs"></i>
-            </button>
+          <!-- Orbital Attribution Metric -->
+          <div class="hero-metric shrink-0">
+            <div class="metric-orbit">
+              <i class="fa-solid fa-shield-halved text-base"></i>
+            </div>
+            <div>
+              <small class="text-[9px] font-mono text-slate-400 tracking-wider">AVERAGE TIME TO ATTRIBUTION</small>
+              <div class="text-2xl font-bold font-mono text-slate-100">01<span class="text-[var(--cyan)]">.8</span> sec</div>
+              <p class="text-[10px] text-emerald-400 flex items-center gap-1 font-medium mt-0.5">
+                <i class="fa-solid fa-arrow-trend-down"></i>
+                <span>32% faster this week</span>
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <!-- SVG Topology Canvas -->
-      <div class="relative w-full h-[380px] rounded-xl bg-[#070A10] border border-slate-800/80 overflow-hidden flex items-center justify-center">
-        <svg id="network-svg" class="w-full h-full cursor-grab active:cursor-grabbing" viewBox="0 0 1000 380" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <marker id="arrow-blue" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1 L 10 5 L 0 9 z" fill="#3B82F6" />
-            </marker>
-            <marker id="arrow-amber" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1 L 10 5 L 0 9 z" fill="#F59E0B" />
-            </marker>
-            <marker id="arrow-red" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1 L 10 5 L 0 9 z" fill="#EF4444" />
-            </marker>
-            <filter id="node-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="6" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-          <g id="graph-zoom-group">
-            <!-- Dynamic SVG nodes and links rendered here -->
-          </g>
-        </svg>
-      </div>
-
-      <!-- Graph Legend -->
-      <div class="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs text-slate-400">
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-          <span>Victim Origin Node</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-          <span>Intermediate Mule / Layering</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-          <span>Destination Exchange (VASP)</span>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- EVIDENCE LEDGER DATA TABLE (Stripe-Grade Minimalist Table) -->
-    <section id="ledger-section" class="rounded-2xl bg-slate-900/70 border border-slate-800/80 shadow-xl overflow-hidden">
-      
-      <!-- Table Header Bar -->
-      <div class="p-6 border-b border-slate-800/70 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-2.5">
-            <h3 class="text-base font-bold text-white tracking-tight">Evidence Ledger & Audit Trail</h3>
-            <span id="ledger-count-badge" class="px-2 py-0.5 rounded-full text-xs font-mono font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              3 Verified Records
+        <!-- TRACE INPUT COMMAND PANEL -->
+        <section class="trace-panel glass-panel p-6 sm:p-7 space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+            <div>
+              <div class="flex items-center gap-2 text-[10px] uppercase font-mono font-bold text-slate-400 tracking-wider">
+                <i class="fa-solid fa-bolt text-amber-400"></i>
+                <span>NEW INVESTIGATION</span>
+              </div>
+              <h2 class="text-base sm:text-lg font-bold text-white tracking-tight mt-0.5">Trace a reported wallet</h2>
+            </div>
+            <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono">
+              <span class="live-dot"></span>
+              <span>LIVE PROVIDERS</span>
             </span>
           </div>
-          <p class="text-xs text-slate-400 mt-1">
-            Complete transaction hash attribution suitable for formal court annexure and Section 65B Indian Evidence Act certification.
-          </p>
+
+          <!-- Network Segmented Control Pills -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="chain-btn-ethereum" onclick="selectChain('ethereum')" class="px-3 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-blue-600/20 text-blue-300 border-blue-500/50">
+              <i class="fa-brands fa-ethereum text-blue-400"></i>
+              <span>Ethereum (ERC-20)</span>
+            </button>
+            <button id="chain-btn-polygon" onclick="selectChain('polygon')" class="px-3 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900/90 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
+              <i class="fa-solid fa-shapes text-purple-400"></i>
+              <span>Polygon PoS (USDT)</span>
+            </button>
+            <button id="chain-btn-tron" onclick="selectChain('tron')" class="px-3 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900/90 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
+              <i class="fa-solid fa-bolt text-red-400"></i>
+              <span>Tron (TRC-20)</span>
+            </button>
+            <button id="chain-btn-syndicate" onclick="selectChain('syndicate')" class="px-3 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900/90 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
+              <i class="fa-solid fa-circle-nodes text-amber-400"></i>
+              <span>Multi-Victim Syndicate</span>
+            </button>
+          </div>
+
+          <!-- Command Input Bar -->
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <div class="flex-1 flex items-center gap-3 px-3.5 h-12 rounded-xl bg-[#030e0a]/80 border border-[rgba(215,184,102,0.22)] focus-within:border-[rgba(215,184,102,0.65)] focus-within:ring-2 focus-within:ring-[rgba(215,184,102,0.15)] transition">
+              <i class="fa-solid fa-wallet text-slate-400 text-sm"></i>
+              <input 
+                id="search-input" 
+                type="text" 
+                placeholder="Paste suspect wallet address (0x... or T...)" 
+                value="0x7d8bf3a7ea0145ade82aca353ad2b57a50e94c77"
+                class="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none font-mono"
+                onkeydown="if(event.key==='Enter') handleSearch(event)"
+              />
+              <button id="btn-clear-search" onclick="clearSearchInput()" title="Clear Input" class="text-slate-500 hover:text-slate-300 p-1">
+                <i class="fa-solid fa-xmark text-xs"></i>
+              </button>
+              <span class="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded border border-[#29445d] text-[#7da1be] text-[10px] font-mono uppercase shrink-0">
+                AUTO-DETECT <i class="fa-solid fa-chevron-right text-[8px]"></i>
+              </span>
+            </div>
+
+            <button id="btn-search" onclick="handleSearch(event)" class="h-12 px-6 rounded-xl bg-[var(--cyan)] hover:bg-[#e4c97d] text-[#08232c] font-bold text-xs uppercase tracking-wider shadow-lg shadow-[rgba(215,184,102,0.2)] transition flex items-center justify-center gap-2 shrink-0">
+              <i class="fa-solid fa-play text-xs"></i>
+              <span>Start Trace</span>
+            </button>
+          </div>
+
+          <!-- Quick Test Chips -->
+          <div class="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-400">
+            <span class="text-slate-500">Quick Test Cases:</span>
+            <button onclick="document.getElementById('search-input').value='0xe6D6947c424AbbAB1C7b3866DC65614EEEC65358'; selectChain('polygon'); handleSearch(event);" class="px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-800 hover:border-[var(--line)] hover:text-amber-300 font-mono text-[11px] transition">
+              <i class="fa-solid fa-wallet text-[10px] mr-1 text-purple-400"></i>Polygon USDT Sweep (0xe6D6...5358)
+            </button>
+            <button onclick="loadPresetCase('ethereum')" class="px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-800 hover:border-[var(--line)] hover:text-amber-300 font-mono text-[11px] transition">
+              <i class="fa-brands fa-ethereum text-[10px] mr-1 text-blue-400"></i>Ethereum Task Scam (FIR-402)
+            </button>
+            <button onclick="loadPresetCase('tron')" class="px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-800 hover:border-[var(--line)] hover:text-amber-300 font-mono text-[11px] transition">
+              <i class="fa-solid fa-bolt text-[10px] mr-1 text-red-400"></i>Tron Pig Butchering (FIR-719)
+            </button>
+          </div>
+
+          <!-- Form Meta Badges -->
+          <div class="flex flex-wrap items-center gap-6 pt-2 border-t border-slate-800/60 text-[11px] text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-shield-halved text-emerald-400"></i> Evidence-safe session
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-globe text-blue-400"></i> TRON · EVM (ETH/POL) · BTC supported
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i class="fa-regular fa-clock text-amber-400"></i> Bounded to 6 hops
+            </span>
+          </div>
+        </section>
+
+        <!-- CRIME RING CONVERGENCE BANNER -->
+        <div id="convergence-banner" class="hidden rounded-xl bg-amber-950/40 border border-amber-800/60 p-4 sm:p-5 text-amber-200">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400 mt-0.5">
+                <i class="fa-solid fa-triangle-exclamation text-base"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-amber-100">
+                  Syndicate Cluster Detected: 5 Inter-State FIRs Converged
+                </h3>
+                <p class="text-xs text-amber-300/80 mt-0.5">
+                  Stolen funds from Delhi, Mumbai, Bengaluru, Hyderabad, and Pune routed through distinct Layer 1 mule addresses and aggregated at Binance Hot Wallet 6.
+                </p>
+              </div>
+            </div>
+            <button onclick="openFreezeNoticeModal()" class="shrink-0 px-3.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-400 transition flex items-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-file-shield text-xs"></i>
+              <span>Multi-FIR Freeze Directive</span>
+            </button>
+          </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <button onclick="downloadNoticeText()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-file-export text-xs"></i>
-            <span>Export Evidence (.txt)</span>
+        <!-- 4 TOP KPI STATS CARDS -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div class="stat-card glass-panel p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-[rgba(215,184,102,0.12)] border border-[rgba(215,184,102,0.25)] flex items-center justify-center text-[var(--cyan)] shrink-0">
+              <i class="fa-solid fa-chart-line text-sm"></i>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase font-mono text-slate-400 tracking-wider">Active Cases</div>
+              <div class="text-lg font-bold font-mono text-white mt-0.5">14 Active</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Awaiting live feed</div>
+            </div>
+          </div>
+
+          <div class="stat-card glass-panel p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+              <i class="fa-solid fa-diagram-project text-sm"></i>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase font-mono text-slate-400 tracking-wider">Wallets Attributed</div>
+              <div id="metric-wallets-count" class="text-lg font-bold font-mono text-white mt-0.5">3 Verified</div>
+              <div class="text-[10px] text-emerald-400 mt-0.5 flex items-center gap-1">
+                <i class="fa-solid fa-arrow-up text-[8px]"></i> Current trace
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card glass-panel p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+              <i class="fa-solid fa-fingerprint text-sm"></i>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase font-mono text-slate-400 tracking-wider">Funds Intercepted</div>
+              <div id="metric-loss-inr-card" class="text-lg font-bold font-mono text-emerald-400 mt-0.5">₹12,19,200 INR</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Secured on-ramp</div>
+            </div>
+          </div>
+
+          <div class="stat-card glass-panel p-4 flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+              <i class="fa-solid fa-gauge-high text-sm"></i>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase font-mono text-slate-400 tracking-wider">Attribution Score</div>
+              <div class="text-lg font-bold font-mono text-amber-400 mt-0.5">88 / 100</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Computed after trace</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- DUAL-COLUMN INTELLIGENCE SECTION -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- LEFT: FLOW INTELLIGENCE CANVAS (7 COLS) -->
+          <div class="lg:col-span-8 glass-panel p-6 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/70 pb-3">
+              <div>
+                <div class="flex items-center gap-2 text-[10px] uppercase font-mono font-bold text-slate-400 tracking-wider">
+                  <i class="fa-solid fa-network-wired text-blue-400"></i>
+                  <span>FLOW INTELLIGENCE</span>
+                </div>
+                <h3 class="text-base font-bold text-white tracking-tight mt-0.5">Latest trace activity</h3>
+              </div>
+
+              <!-- Canvas Controls & Stats -->
+              <div class="flex items-center gap-3 text-xs">
+                <span id="graph-stats-lbl" class="font-mono text-[11px] text-slate-400">3 Nodes Resolved · 2 Edges</span>
+                <div class="flex items-center rounded-lg bg-slate-950 border border-slate-800 text-slate-300">
+                  <button onclick="zoomGraph(1.2)" class="px-2 py-1 hover:text-white transition" title="Zoom In">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                  </button>
+                  <span class="h-3 w-px bg-slate-800"></span>
+                  <button onclick="zoomGraph(0.8)" class="px-2 py-1 hover:text-white transition" title="Zoom Out">
+                    <i class="fa-solid fa-minus text-xs"></i>
+                  </button>
+                  <span class="h-3 w-px bg-slate-800"></span>
+                  <button onclick="resetGraphZoom()" class="px-2 py-1 hover:text-white transition" title="Reset Zoom">
+                    <i class="fa-solid fa-rotate-left text-xs"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SVG Flow Canvas -->
+            <div class="flow-canvas flex items-center justify-center">
+              <div class="flow-grid"></div>
+              
+              <svg id="network-svg" class="w-full h-full cursor-grab active:cursor-grabbing relative z-10" viewBox="0 0 1000 340" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <marker id="arrow-blue" viewBox="0 0 10 10" refX="24" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#3B82F6" />
+                  </marker>
+                  <marker id="arrow-amber" viewBox="0 0 10 10" refX="24" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#F59E0B" />
+                  </marker>
+                  <marker id="arrow-red" viewBox="0 0 10 10" refX="24" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 10 5 L 0 9 z" fill="#EF4444" />
+                  </marker>
+                  <filter id="node-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                <g id="graph-zoom-group">
+                  <!-- Dynamic SVG nodes and curved flows injected here -->
+                </g>
+              </svg>
+            </div>
+
+            <!-- Canvas Legend -->
+            <div class="flex flex-wrap items-center justify-between gap-4 pt-2 text-[11px] text-slate-400">
+              <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Suspect Wallet</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Layering Mule</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span> Bridge / Contract</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Target VASP</span>
+              </div>
+              <span class="font-mono text-[10px] text-slate-500">Click any node for deep audit dossier</span>
+            </div>
+          </div>
+
+          <!-- RIGHT: VASP ATTRIBUTION & ALERTS (4 COLS) -->
+          <div class="lg:col-span-4 flex flex-col gap-6">
+            
+            <!-- VASP ATTRIBUTION CARD -->
+            <div class="glass-panel p-6 space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-800/70 pb-3">
+                <div>
+                  <div class="flex items-center gap-1.5 text-[10px] uppercase font-mono font-bold text-slate-400 tracking-wider">
+                    <i class="fa-solid fa-shield-check text-emerald-400"></i>
+                    <span>VASP ATTRIBUTION</span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white tracking-tight mt-0.5">Provider result</h3>
+                </div>
+                <span class="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                  VERIFIED
+                </span>
+              </div>
+
+              <!-- Profile Box -->
+              <div class="flex items-center gap-3.5 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                <div id="vasp-avatar-emblem" class="w-11 h-11 rounded-xl bg-[#202a31] border border-[#514d2e] flex items-center justify-center font-bold font-mono text-xl text-amber-300 shrink-0">
+                  K
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <h4 id="metric-vasp" class="text-sm font-bold text-white truncate">Kraken Storage 4</h4>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400">Label match</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Receiving address · Custody Endpoint</p>
+                </div>
+              </div>
+
+              <!-- Evidence Particulars -->
+              <div class="space-y-2 text-xs">
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-800/60">
+                  <span class="text-slate-400">Compliance Authority</span>
+                  <span id="metric-fiu" class="font-semibold text-emerald-400">Offshore Entity</span>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-800/60">
+                  <span class="text-slate-400">Attribution Latency</span>
+                  <span id="metric-speed" class="font-mono text-slate-200">12 seconds</span>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-800/60">
+                  <span class="text-slate-400">Statutory Freeze SLA</span>
+                  <span id="metric-sla" class="font-mono text-emerald-400">&lt; 45 minutes</span>
+                </div>
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-800/60">
+                  <span class="text-slate-400">Total Loss Volume</span>
+                  <span id="metric-loss-crypto" class="font-mono font-bold text-white">5.08 ETH</span>
+                </div>
+                <div class="flex items-center justify-between py-1.5">
+                  <span class="text-slate-400">Estimated INR Value</span>
+                  <span id="metric-loss-inr" class="font-mono font-bold text-emerald-400">₹12,19,200 INR</span>
+                </div>
+              </div>
+
+              <!-- Primary Directive Action Button -->
+              <button onclick="openFreezeNoticeModal()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider shadow-md transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-gavel text-xs"></i>
+                <span>Generate Section 91 Order</span>
+              </button>
+            </div>
+
+            <!-- LIVE ALERTS CARD -->
+            <div class="glass-panel p-6 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800/70 pb-3">
+                <div>
+                  <div class="flex items-center gap-1.5 text-[10px] uppercase font-mono font-bold text-slate-400 tracking-wider">
+                    <i class="fa-solid fa-bell text-blue-400"></i>
+                    <span>ALERTS</span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white tracking-tight mt-0.5">Live activity</h3>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400">01</span>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex items-start gap-3 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/60">
+                  <div class="w-6 h-6 rounded-md bg-blue-500/10 text-blue-400 flex items-center justify-center text-xs mt-0.5 shrink-0">
+                    <i class="fa-solid fa-bolt"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-semibold text-slate-200" id="alert-title-preview">Rapid Layering Hop Detected</div>
+                    <div class="text-[10px] text-slate-400 mt-0.5" id="alert-time-preview">Just now · Automated AML Hook</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- EXECUTIVE VERDICT & FORENSIC NARRATIVE CARD -->
+        <section id="verdict-section" class="glass-panel p-6 sm:p-7 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <span id="verdict-status-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-check text-xs"></i>
+                <span>VASP ATTRIBUTED · ACTIONABLE</span>
+              </span>
+              <span id="verdict-fir" class="px-2.5 py-1 rounded-full text-xs font-mono text-slate-400 bg-slate-900 border border-slate-800">
+                FIR-402/2026 (Special Cyber Cell, Delhi Police)
+              </span>
+              <span id="verdict-chain" class="px-2.5 py-1 rounded-full text-xs font-medium text-blue-400 bg-blue-500/10 border border-blue-500/20">
+                Ethereum Mainnet
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="btn-copy-text" onclick="copyVerdictNarrative()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition flex items-center gap-1.5">
+                <i class="fa-regular fa-copy text-xs"></i>
+                <span>Copy Narrative</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <h3 id="verdict-headline" class="text-base sm:text-lg font-bold text-white tracking-tight">
+              Telegram Task & Rating Scam
+            </h3>
+            <p id="verdict-narrative" class="text-sm text-slate-300 leading-relaxed max-w-5xl">
+              The victim was lured into a Telegram daily rating scam. 5.08 ETH was swiftly layered through 1 intermediary mule wallet before being deposited into Kraken Cold Storage. Funds are held in a custodial account ready for Section 91 CrPC asset freezing.
+            </p>
+          </div>
+
+          <!-- Directives Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/60">
+            <div class="text-xs text-slate-400 flex items-center gap-2">
+              <i class="fa-solid fa-scale-balanced text-slate-400"></i>
+              <span>Statutory directives prepared under Section 91 Cr.P.C. / BNSS § 94</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="toggleDeepInspector()" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition flex items-center gap-2">
+                <i id="btn-toggle-inspector-icon" class="fa-solid fa-list-check text-xs"></i>
+                <span id="btn-toggle-inspector-text">Forensic Dossier</span>
+              </button>
+              <button onclick="openFreezeNoticeModal()" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition flex items-center gap-2">
+                <i class="fa-solid fa-gavel text-xs"></i>
+                <span>Generate Freeze Directive</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- DEEP INSPECTOR COLLAPSIBLE DOSSIER -->
+        <div id="deep-inspector-content" class="hidden glass-panel p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h4 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+              <i class="fa-solid fa-microscope text-[var(--cyan)]"></i>
+              <span>Detailed Forensic Audit Dossier</span>
+            </h4>
+            <button onclick="toggleDeepInspector()" class="text-slate-400 hover:text-white text-xs">
+              <i class="fa-solid fa-xmark"></i> Close
+            </button>
+          </div>
+          <div class="text-xs text-slate-400 leading-relaxed">
+            Autonomous multi-chain analyzer parsed block headers, gas limits, ERC-20 token events, and exchange custody vaults.
+          </div>
+        </div>
+
+        <!-- 3-STEP VISUAL TRAIL ("FOLLOW THE MONEY") -->
+        <section class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-white uppercase font-mono tracking-wider">Fund Traversal Pathway</h3>
+              <p class="text-xs text-slate-400">Click any step to inspect the wallet's full on-chain profile.</p>
+            </div>
+            <span class="text-xs font-mono text-slate-500">Autonomous 3-Step Hop Trail</span>
+          </div>
+
+          <div id="stepper-cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Dynamic step cards injected via renderChainCase() -->
+          </div>
+        </section>
+
+        <!-- EVIDENCE LEDGER DATA TABLE (Stripe-Grade Minimalist Table) -->
+        <section id="ledger-section" class="glass-panel overflow-hidden shadow-xl">
+          
+          <div class="p-6 border-b border-slate-800/70 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h3 class="text-base font-bold text-white tracking-tight">Evidence Ledger & Audit Trail</h3>
+                <span id="ledger-count-badge" class="px-2 py-0.5 rounded-full text-xs font-mono font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  3 Verified Records
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                Complete transaction hash attribution suitable for formal court annexure and Section 65B Indian Evidence Act certification.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="downloadNoticeText()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-export text-xs"></i>
+                <span>Export Evidence (.txt)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Table Container with Invisible Vertical Borders and Generous Padding -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse border-x-0">
+              <thead>
+                <tr class="border-b border-slate-800/80 bg-slate-950/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <th scope="col" class="py-3.5 px-5">Hop</th>
+                  <th scope="col" class="py-3.5 px-4">Date / Time</th>
+                  <th scope="col" class="py-3.5 px-4">Origin Wallet</th>
+                  <th scope="col" class="py-3.5 px-4">Counterparty / Recipient</th>
+                  <th scope="col" class="py-3.5 px-4">Transferred Value</th>
+                  <th scope="col" class="py-3.5 px-4">Tactic / Action</th>
+                  <th scope="col" class="py-3.5 px-5 text-right">Inspect</th>
+                </tr>
+              </thead>
+              <tbody id="ledger-table-body" class="divide-y divide-slate-800/50 text-xs">
+                <!-- Dynamic rows injected via renderLedgerTable() -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="px-6 py-4 bg-slate-950/60 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+            <span>Showing comprehensive on-chain transactions across resolved trajectory.</span>
+            <span class="font-mono text-[11px]">Integrity Hash: SHA-256 Validated</span>
+          </div>
+
+        </section>
+
+      </main>
+
+      <!-- TAB 2: INVESTIGATIONS VIEW (When clicked in Sidebar) -->
+      <main id="tab-content-investigations" class="hidden flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-8 py-8 space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Investigation Workspace</h2>
+            <p class="text-xs text-slate-400">Manage ongoing criminal crypto fraud cases across multi-state jurisdictions.</p>
+          </div>
+          <button onclick="switchTab('dashboard')" class="px-3.5 py-1.5 rounded-lg bg-[var(--cyan)] text-[#08232c] text-xs font-bold transition">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Dashboard
           </button>
         </div>
-      </div>
 
-      <!-- Table Container with Invisible Vertical Borders and Generous Padding -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse border-x-0">
-          <thead>
-            <tr class="border-b border-slate-800/80 bg-slate-950/40 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-              <th scope="col" class="py-3.5 px-5">Hop</th>
-              <th scope="col" class="py-3.5 px-4">Date / Time</th>
-              <th scope="col" class="py-3.5 px-4">Origin Wallet</th>
-              <th scope="col" class="py-3.5 px-4">Counterparty / Recipient</th>
-              <th scope="col" class="py-3.5 px-4">Transferred Value</th>
-              <th scope="col" class="py-3.5 px-4">Tactic / Action</th>
-              <th scope="col" class="py-3.5 px-5 text-right">Inspect</th>
-            </tr>
-          </thead>
-          <tbody id="ledger-table-body" class="divide-y divide-slate-800/50 text-xs">
-            <!-- Dynamic rows with invisible vertical borders injected via renderLedgerTable() -->
-          </tbody>
-        </table>
-      </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div onclick="loadPresetCase('ethereum'); switchTab('dashboard');" class="glass-panel p-5 space-y-3 cursor-pointer hover:border-[var(--line)] transition">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400">ETH MAINNET</span>
+              <span class="text-xs font-mono text-emerald-400 font-bold">5.08 ETH</span>
+            </div>
+            <h3 class="text-sm font-bold text-white">FIR-402/2026 (Delhi Cyber Cell)</h3>
+            <p class="text-xs text-slate-400">Telegram task & rating scam. Traced directly to Kraken Cold Storage.</p>
+          </div>
 
-      <div class="px-6 py-4 bg-slate-950/40 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
-        <span>Showing comprehensive on-chain transactions across resolved trajectory.</span>
-        <span class="font-mono text-[11px]">Integrity Hash: SHA-256 Validated</span>
-      </div>
+          <div onclick="loadPresetCase('polygon'); switchTab('dashboard');" class="glass-panel p-5 space-y-3 cursor-pointer hover:border-[var(--line)] transition">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-500/10 text-purple-400">POLYGON POS</span>
+              <span class="text-xs font-mono text-emerald-400 font-bold">8,500 POL</span>
+            </div>
+            <h3 class="text-sm font-bold text-white">FIR-512/2026 (Bengaluru PS)</h3>
+            <p class="text-xs text-slate-400">High-yield fake gaming DApp liquidity drain. Routed to CoinDCX.</p>
+          </div>
 
-    </section>
+          <div onclick="loadPresetCase('tron'); switchTab('dashboard');" class="glass-panel p-5 space-y-3 cursor-pointer hover:border-[var(--line)] transition">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-red-500/10 text-red-400">TRON TRC-20</span>
+              <span class="text-xs font-mono text-emerald-400 font-bold">25,000 USDT</span>
+            </div>
+            <h3 class="text-sm font-bold text-white">FIR-719/2026 (Cyberabad PS)</h3>
+            <p class="text-xs text-slate-400">Pig butchering romance forex fraud. Swept into Binance cluster.</p>
+          </div>
+        </div>
+      </main>
 
-  </main>
+      <!-- TAB 3: REPORTS VIEW -->
+      <main id="tab-content-reports" class="hidden flex-1 max-w-[1500px] w-full mx-auto px-4 sm:px-8 py-8 space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white">Investigation Reports & Directives</h2>
+            <p class="text-xs text-slate-400">Export statutory freeze orders and court-ready forensic annexures.</p>
+          </div>
+          <button onclick="switchTab('dashboard')" class="px-3.5 py-1.5 rounded-lg bg-[var(--cyan)] text-[#08232c] text-xs font-bold transition">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Dashboard
+          </button>
+        </div>
 
-  <!-- FOOTER -->
-  <footer class="mt-12 border-t border-slate-800/80 bg-[#070A10] py-8 text-xs text-slate-500">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <span class="font-semibold text-slate-400">AEGIS TRACE</span>
-        <span>•</span>
-        <span>Statutory Law Enforcement Cyber Forensics Platform</span>
-      </div>
-      <div class="flex items-center gap-4 text-[11px]">
-        <span>Section 91 Cr.P.C. / BNSS § 94 Ready</span>
-        <span>•</span>
-        <span>FIU-IND Reporting Integration</span>
-        <span>•</span>
-        <span>Smart India Hackathon 2026</span>
-      </div>
+        <div class="glass-panel p-6 space-y-4">
+          <h3 class="text-sm font-bold text-white">Statutory Court Reports Available</h3>
+          <p class="text-xs text-slate-400">Generate certified PDFs and plaintext preservation orders under Section 91 Cr.P.C. / BNSS § 94.</p>
+          <div class="flex flex-wrap gap-3 pt-2">
+            <button onclick="openFreezeNoticeModal()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition flex items-center gap-2">
+              <i class="fa-solid fa-gavel"></i> Open Freeze Notice Generator
+            </button>
+            <button onclick="downloadNoticeText()" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs transition flex items-center gap-2">
+              <i class="fa-solid fa-download"></i> Export Evidence Ledger (.txt)
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <!-- FOOTER -->
+      <footer class="border-t border-slate-800/80 bg-[#040e0a] py-6 text-xs text-slate-500">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-400">TRACEGRID</span>
+            <span>•</span>
+            <span>I4C National Law Enforcement Attribution Engine</span>
+          </div>
+          <div class="flex items-center gap-4 text-[11px]">
+            <span>Section 91 Cr.P.C. / BNSS § 94 Ready</span>
+            <span>•</span>
+            <span>FIU-IND Reporting Architecture</span>
+            <span>•</span>
+            <span>SIH Problem ID 26183</span>
+          </div>
+        </div>
+      </footer>
+
     </div>
-  </footer>
+
+  </div>
 
   <!-- SLIDE-OVER WALLET INSPECTOR DRAWER -->
   <div id="inspector-drawer" class="fixed inset-0 z-50 pointer-events-none hidden transition-all duration-300">
-    <!-- Backdrop -->
-    <div onclick="closeInspectorDrawer()" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm pointer-events-auto transition-opacity opacity-0" id="drawer-backdrop"></div>
-    
-    <!-- Drawer Panel -->
-    <div class="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-[#0F172A] border-l border-slate-800 shadow-2xl pointer-events-auto flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out" id="drawer-panel">
-      <!-- Injected via openNodeInspector() -->
+    <div onclick="closeInspectorDrawer()" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm pointer-events-auto transition-opacity opacity-0" id="drawer-backdrop"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-[#0e241b] border-l border-[var(--line)] shadow-2xl pointer-events-auto flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out" id="drawer-panel">
       <div id="drawer-content" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
     </div>
   </div>
 
   <!-- SECTION 91 CR.P.C. / BNSS FREEZE DIRECTIVE MODAL -->
   <div id="freeze-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <!-- Modal Backdrop -->
     <div onclick="closeFreezeNoticeModal()" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
     
-    <!-- Modal Dialog Box -->
-    <div class="relative w-full max-w-3xl rounded-2xl bg-[#0F172A] border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-      
-      <!-- Modal Header -->
+    <div class="relative w-full max-w-3xl rounded-2xl bg-[#0e271d] border border-[var(--line)] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       <div class="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <div class="w-8 h-8 rounded-lg bg-[rgba(215,184,102,0.15)] border border-[rgba(215,184,102,0.3)] flex items-center justify-center text-[var(--gold)]">
             <i class="fa-solid fa-gavel text-sm"></i>
           </div>
           <div>
@@ -563,17 +1146,15 @@
         </button>
       </div>
 
-      <!-- Modal Body (Notice Content) -->
-      <div class="p-6 overflow-y-auto flex-1 bg-slate-950/50">
-        <div class="rounded-xl bg-slate-900 border border-slate-800 p-4">
+      <div class="p-6 overflow-y-auto flex-1 bg-slate-950/60">
+        <div class="rounded-xl bg-slate-900/90 border border-slate-800 p-4">
           <pre id="notice-text-content" class="font-mono text-xs text-slate-300 whitespace-pre-wrap leading-relaxed select-text"></pre>
         </div>
       </div>
 
-      <!-- Modal Footer -->
       <div class="px-6 py-4 border-t border-slate-800 bg-slate-900/60 flex flex-wrap items-center justify-between gap-3">
         <div class="text-[11px] text-slate-400">
-          <i class="fa-solid fa-shield-halved text-blue-400 mr-1"></i> Digitally validated under Indian Information Technology Act (Cert-In)
+          <i class="fa-solid fa-shield-halved text-[var(--gold)] mr-1"></i> Validated under Indian Information Technology Act (Cert-In)
         </div>
         <div class="flex items-center gap-2">
           <button onclick="downloadNoticeText()" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1.5">
@@ -584,23 +1165,55 @@
             <i class="fa-solid fa-print text-xs"></i>
             <span>Print</span>
           </button>
-          <button onclick="copyNoticeText()" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 shadow-sm transition flex items-center gap-1.5">
+          <button onclick="copyNoticeText()" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#08232c] bg-[var(--cyan)] hover:bg-[#e4c97d] shadow-sm transition flex items-center gap-1.5">
             <i class="fa-regular fa-copy text-xs"></i>
             <span id="btn-copy-notice-lbl">Copy Order</span>
           </button>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- SECURE ANALYST ACCESS AUTH MODAL -->
+  <div id="auth-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeAuthModal()" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
+    <div class="relative w-full max-w-sm rounded-2xl bg-[#0e271d] border border-[var(--line)] shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-[10px] uppercase font-mono font-bold text-[var(--gold)]">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>SECURE ANALYST ACCESS</span>
+        </div>
+        <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-white" id="auth-modal-title">Welcome back</h3>
+        <p class="text-xs text-slate-400 mt-1">Authenticated law enforcement console access.</p>
+      </div>
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1">Work Email / Nodal ID</label>
+          <input id="auth-email" type="email" placeholder="investigator@cybercell.gov.in" value="analyst@i4c.mha.gov.in" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-[var(--line)]" required />
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1">Password</label>
+          <input id="auth-pass" type="password" value="CyberInvestigator2026!" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-[var(--line)]" required />
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-lg bg-[var(--cyan)] hover:bg-[#e4c97d] text-[#08232c] text-xs font-bold uppercase tracking-wider transition">
+          Sign In Securely
+        </button>
+      </form>
     </div>
   </div>
 
   <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 shadow-2xl text-xs text-white flex items-center gap-3">
-    <div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden rounded-xl bg-[#0e271d] border border-[var(--line)] px-4 py-3 shadow-2xl text-xs text-white flex items-center gap-3">
+    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
     <span id="toast-text">Notification</span>
   </div>
 
-  <!-- JAVASCRIPT CORE ENGINE -->
+  <!-- CORE FORENSIC ENGINE JAVASCRIPT -->
   <script>
     // MULTI-CHAIN CASES DATA
     const MULTI_CHAIN_CASES = {
@@ -817,7 +1430,7 @@
     let currentActiveCustomCase = null;
     let isDeepInspectorOpen = false;
 
-    // Toast utility
+    // Toast Utility
     function showToast(msg) {
       const toast = document.getElementById('toast');
       const text = document.getElementById('toast-text');
@@ -826,17 +1439,92 @@
       setTimeout(() => toast.classList.add('hidden'), 3500);
     }
 
-    // Toggle Mode
+    // Toggle Mobile Sidebar
+    function toggleMobileSidebar() {
+      const sb = document.getElementById('sidebar-drawer');
+      sb.classList.toggle('sidebar-open');
+    }
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      const tabs = ['dashboard', 'investigations', 'reports'];
+      tabs.forEach(t => {
+        const c = document.getElementById(`tab-content-${t}`);
+        const nav = document.getElementById(`nav-tab-${t}`);
+        if (c) c.classList.toggle('hidden', t !== tabId);
+        if (nav) nav.classList.toggle('active', t === tabId);
+      });
+
+      const breadcrumb = document.getElementById('breadcrumb-current');
+      if (breadcrumb) {
+        breadcrumb.innerText = tabId === 'dashboard' ? 'Overview' : tabId[0].toUpperCase() + tabId.slice(1);
+      }
+
+      if (window.innerWidth < 900) {
+        const sb = document.getElementById('sidebar-drawer');
+        sb.classList.remove('sidebar-open');
+      }
+
+      if (tabId === 'ledger') {
+        switchTab('dashboard');
+        const ledger = document.getElementById('ledger-section');
+        if (ledger) ledger.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // Notifications Popover Toggle
+    function toggleNotifications() {
+      const pop = document.getElementById('notification-popover');
+      pop.classList.toggle('hidden');
+    }
+
+    // Location Sharing (LEA Chain of Custody)
+    function shareLocation() {
+      if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by your browser.');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          showToast(`Investigator location recorded: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (Accuracy: ${pos.coords.accuracy.toFixed(0)}m)`);
+          toggleNotifications();
+        },
+        err => {
+          showToast('Geolocation access was not granted.');
+        }
+      );
+    }
+
+    // Analyst Auth Modal
+    function openAuthModal() {
+      document.getElementById('auth-modal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.add('hidden');
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const name = email.split('@')[0];
+      document.getElementById('analyst-name-display').innerText = `IO ${name.toUpperCase()}`;
+      localStorage.setItem('tracegrid_analyst', email);
+      closeAuthModal();
+      showToast(`Authenticated session for ${email}`);
+    }
+
+    // Toggle Mode (Live vs Simulation)
     function toggleMode(mode) {
       const btnLive = document.getElementById('btn-mode-live');
       const btnSim = document.getElementById('btn-mode-sim');
       if (mode === 'live') {
-        btnLive.className = "px-3 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 bg-blue-600/20 text-blue-300 border border-blue-500/40";
-        btnSim.className = "px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
+        btnLive.className = "px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        btnSim.className = "px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
         showToast('Switched to Live RPC Node Network (Direct On-Chain)');
       } else {
-        btnSim.className = "px-3 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 bg-blue-600/20 text-blue-300 border border-blue-500/40";
-        btnLive.className = "px-3 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
+        btnSim.className = "px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        btnLive.className = "px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5";
         showToast('Switched to Multi-Chain Forensic Scenarios');
       }
     }
@@ -871,9 +1559,9 @@
         const btn = document.getElementById(`chain-btn-${k}`);
         if (btn) {
           if (k === chainKey) {
-            btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-blue-600/20 text-blue-300 border-blue-500/50 shadow-sm";
+            btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-blue-600/20 text-blue-300 border-blue-500/50 shadow-sm";
           } else {
-            btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200";
+            btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900/90 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200";
           }
         }
       });
@@ -890,7 +1578,7 @@
       }
     }
 
-    // Safe Wei parser to prevent BigInt parsing crashes
+    // Safe Wei parser
     function parseWei(result) {
       if (typeof result === 'string' && /^\d+$/.test(result)) {
         return BigInt(result);
@@ -906,7 +1594,7 @@
       
       try {
         const balRes = await fetch(balUrl).then(r => r.json()).catch(() => null);
-        await new Promise(r => setTimeout(r, 220)); // Respect free tier rate limit
+        await new Promise(r => setTimeout(r, 220));
         const txRes = await fetch(txUrl).then(r => r.json()).catch(() => null);
         await new Promise(r => setTimeout(r, 220));
         const tokenTxRes = await fetch(tokenTxUrl).then(r => r.json()).catch(() => null);
@@ -962,7 +1650,6 @@
           };
         });
 
-        // Merge and sort newest first
         const allTxs = [...normTokenTxs, ...normNativeTxs].sort((a, b) => parseInt(b.timeStamp) - parseInt(a.timeStamp));
 
         return { bal, txs: allTxs, tokenTxs: normTokenTxs, nativeTxs: normNativeTxs };
@@ -997,7 +1684,7 @@
     async function traceLiveWallet(addr) {
       const btn = document.getElementById('btn-search');
       btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Querying Live Nodes...</span>`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> <span>Tracing Live...</span>`;
       showToast(`Querying live on-chain nodes for ${addr.substring(0, 10)}...`);
 
       try {
@@ -1007,7 +1694,7 @@
         if (!isTron && !isEthOrPoly) {
           showToast('Invalid address format. Must be 0x... (EVM) or T... (Tron).');
           btn.disabled = false;
-          btn.innerHTML = `<span>Analyze Wallet</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+          btn.innerHTML = `<i class="fa-solid fa-play text-xs"></i> <span>Start Trace</span>`;
           return;
         }
 
@@ -1017,8 +1704,8 @@
             const b = document.getElementById(`chain-btn-${k}`);
             if (b) {
               b.className = k === 'tron' 
-                ? "px-3.5 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-blue-600/20 text-blue-300 border-blue-500/50 shadow-sm"
-                : "px-3.5 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200";
+                ? "px-3 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-blue-600/20 text-blue-300 border-blue-500/50 shadow-sm"
+                : "px-3 py-1.5 rounded-lg text-xs font-medium border transition flex items-center gap-2 bg-slate-900/90 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200";
             }
           });
 
@@ -1136,7 +1823,7 @@
           if (txs.length === 0 && bal === 0n) {
             showToast(`No transactions found on ${chainName}. Try switching chain or test another address.`);
             btn.disabled = false;
-            btn.innerHTML = `<span>Analyze Wallet</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+            btn.innerHTML = `<i class="fa-solid fa-play text-xs"></i> <span>Start Trace</span>`;
             return;
           }
 
@@ -1157,7 +1844,6 @@
 
             let downstreamStep = null;
             if (!isVasp) {
-              // Check 1 hop forward
               try {
                 const destCheck = await fetch(`https://api.etherscan.io/v2/api?chainid=${chainId}&module=account&action=tokentx&address=${dest}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${ETHERSCAN_API_KEY}`).then(r => r.json()).catch(() => null);
                 const destTxs = Array.isArray(destCheck?.result) ? destCheck.result : [];
@@ -1315,7 +2001,7 @@
         showToast('Error during live scan. Please check address format.');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<span>Analyze Wallet</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+        btn.innerHTML = `<i class="fa-solid fa-play text-xs"></i> <span>Start Trace</span>`;
       }
     }
 
@@ -1329,13 +2015,13 @@
       const isVasp = data.steps && data.steps.some(s => s.type === 'vasp');
       
       if (isVasp) {
-        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>VASP IDENTIFIED • ACTIONABLE</span>`;
+        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>VASP IDENTIFIED · ACTIONABLE</span>`;
         statusBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5";
       } else if (isSwept) {
         statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span><span>ACTIVE ZERO-BALANCE SWEEP</span>`;
         statusBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5";
       } else {
-        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span><span>ANALYZED • IN REVIEW</span>`;
+        statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span><span>ANALYZED · IN REVIEW</span>`;
         statusBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center gap-1.5";
       }
 
@@ -1347,9 +2033,17 @@
       // Metrics
       document.getElementById('metric-loss-crypto').innerText = data.reportedLoss;
       document.getElementById('metric-loss-inr').innerText = data.lossInr;
+      document.getElementById('metric-loss-inr-card').innerText = data.lossInr;
       document.getElementById('metric-speed').innerText = data.traversalTime;
       document.getElementById('metric-vasp').innerText = data.nearestVasp;
       document.getElementById('metric-vasp').title = data.nearestVasp;
+
+      // Update VASP monogram emblem
+      const emblem = document.getElementById('vasp-avatar-emblem');
+      if (emblem && data.nearestVasp) {
+        emblem.innerText = data.nearestVasp.trim().slice(0, 1).toUpperCase();
+      }
+
       document.getElementById('metric-fiu').innerHTML = data.fiuRegistered 
         ? '<span class="text-emerald-400 font-semibold">Verified (FIU-IND)</span>' 
         : '<span class="text-amber-400 font-semibold">Offshore Entity</span>';
@@ -1373,20 +2067,20 @@
           : 'bg-blue-500/10 text-blue-400 border-blue-500/30';
 
         const stepCard = document.createElement('div');
-        stepCard.className = "rounded-xl bg-slate-900/80 border border-slate-800 p-5 space-y-3 hover:border-slate-700 transition cursor-pointer group shadow-sm";
+        stepCard.className = "rounded-xl bg-slate-900/80 border border-slate-800/90 p-5 space-y-3 hover:border-[var(--line)] transition cursor-pointer group shadow-sm";
         stepCard.onclick = () => openNodeInspector(idx);
 
         stepCard.innerHTML = `
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-xs font-bold font-mono group-hover:bg-blue-600 group-hover:text-white transition">
+              <span class="w-6 h-6 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-xs font-bold font-mono group-hover:bg-[var(--cyan)] group-hover:text-slate-950 transition">
                 ${step.step}
               </span>
               <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full border ${badgeColor}">
                 ${step.role}
               </span>
             </div>
-            <button class="text-xs text-slate-500 group-hover:text-blue-400 transition" title="Inspect Node">
+            <button class="text-xs text-slate-500 group-hover:text-amber-300 transition" title="Inspect Node">
               <i class="fa-solid fa-arrow-up-right-from-square"></i>
             </button>
           </div>
@@ -1425,12 +2119,12 @@
       renderSvgGraph(data.steps);
       renderLedgerTable(data.steps, data);
 
-      // Deep Inspector dossier
+      // Deep Inspector Dossier
       const deepContent = document.getElementById('deep-inspector-content');
       deepContent.innerHTML = `
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <h4 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-            <i class="fa-solid fa-microscope text-blue-400"></i>
+            <i class="fa-solid fa-microscope text-[var(--cyan)]"></i>
             <span>Detailed Forensic Dossier: ${data.fir}</span>
           </h4>
           <button onclick="toggleDeepInspector()" class="text-slate-400 hover:text-white text-xs">
@@ -1439,17 +2133,17 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300 pt-1">
           <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
-            <div class="text-slate-400 text-[11px] uppercase font-semibold">Incident FIR</div>
+            <div class="text-slate-400 text-[11px] uppercase font-semibold font-mono">Incident FIR</div>
             <div class="text-white font-mono font-medium">${data.fir}</div>
             <div class="text-slate-400 text-[11px]">Victim: ${data.victimName}</div>
           </div>
           <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
-            <div class="text-slate-400 text-[11px] uppercase font-semibold">Destination Entity</div>
+            <div class="text-slate-400 text-[11px] uppercase font-semibold font-mono">Destination Entity</div>
             <div class="text-white font-medium truncate">${data.nearestVasp}</div>
             <div class="text-slate-400 text-[11px]">Type: ${data.vaspType}</div>
           </div>
           <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 space-y-1">
-            <div class="text-slate-400 text-[11px] uppercase font-semibold">Statutory Compliance</div>
+            <div class="text-slate-400 text-[11px] uppercase font-semibold font-mono">Statutory Compliance</div>
             <div class="text-emerald-400 font-medium">${data.complianceEmail}</div>
             <div class="text-slate-400 text-[11px]">Jurisdiction: ${data.fiuRegistered ? 'FIU-IND Reporting Entity' : 'Cross-Border Exchange'}</div>
           </div>
@@ -1538,7 +2232,7 @@
       if (g) g.setAttribute('transform', 'scale(1)');
     }
 
-    // SVG Graph Rendering
+    // SVG Graph Rendering with Curved Bezier Connections
     function renderSvgGraph(steps) {
       const svg = document.getElementById('network-svg');
       const group = document.getElementById('graph-zoom-group');
@@ -1549,7 +2243,7 @@
       resetGraphZoom();
 
       const count = steps.length;
-      stats.innerText = `${count} Nodes Resolved • ${count - 1} On-Chain Transaction Edges`;
+      stats.innerText = `${count} Nodes Resolved · ${count - 1} On-Chain Edges`;
 
       let xCoords = [500];
       if (count === 2) {
@@ -1561,60 +2255,61 @@
         xCoords = steps.map((_, i) => startX + i * step);
       }
 
-      const yCoord = 190;
+      const yCoord = 170;
       let svgHtml = '';
 
-      // Edges
+      // Curved Edges with Animated Flow
       for (let i = 0; i < count - 1; i++) {
         const x1 = xCoords[i];
         const x2 = xCoords[i + 1];
-        const txSnippet = steps[i + 1].txHash ? `${steps[i + 1].txHash.substring(0, 8)}...` : 'tx';
         const vol = steps[i + 1].volume || '5.08 ETH';
+        const midX = (x1 + x2) / 2;
+        const curveOffset = (i % 2 === 0) ? -28 : 28;
 
         svgHtml += `
           <g class="graph-edge">
-            <line x1="${x1}" y1="${yCoord}" x2="${x2}" y2="${yCoord}" stroke="#3B82F6" stroke-width="2" stroke-dasharray="6 6" class="animate-flow" marker-end="url(#arrow-blue)" />
-            <rect x="${(x1 + x2) / 2 - 50}" y="${yCoord - 24}" width="100" height="20" rx="6" fill="#0F172A" stroke="#1E293B" />
-            <text x="${(x1 + x2) / 2}" y="${yCoord - 10}" fill="#94A3B8" font-size="10" font-family="'JetBrains Mono', monospace" text-anchor="middle" font-weight="500">
+            <path d="M ${x1} ${yCoord} Q ${midX} ${yCoord + curveOffset} ${x2} ${yCoord}" fill="none" stroke="#6D9DFF" stroke-width="2" stroke-dasharray="6 6" class="animate-flow" marker-end="url(#arrow-blue)" />
+            <rect x="${midX - 45}" y="${yCoord + curveOffset / 2 - 12}" width="90" height="22" rx="6" fill="#06120e" stroke="rgba(215,184,102,0.3)" />
+            <text x="${midX}" y="${yCoord + curveOffset / 2 + 2}" fill="#D7B866" font-size="10" font-family="'DM Mono', monospace" text-anchor="middle" font-weight="600">
               ${vol}
             </text>
           </g>
         `;
       }
 
-      // Nodes
+      // Glowing Node Cards
       steps.forEach((s, idx) => {
         const x = xCoords[idx];
         const isVasp = s.type === 'vasp';
         const isMule = s.type === 'mule';
-        const color = isVasp ? '#10B981' : isMule ? '#F59E0B' : '#3B82F6';
-        const glowColor = isVasp ? 'rgba(16, 185, 129, 0.4)' : isMule ? 'rgba(245, 158, 11, 0.4)' : 'rgba(59, 130, 246, 0.4)';
-        const roleLabel = isVasp ? 'TARGET VASP' : isMule ? 'INTERMEDIARY MULE' : 'VICTIM ORIGIN';
-        const entityShort = s.entity.length > 20 ? s.entity.substring(0, 18) + '…' : s.entity;
+        const color = isVasp ? '#52D59D' : isMule ? '#F4B86B' : '#FF6676';
+        const roleLabel = isVasp ? 'TARGET VASP' : isMule ? 'INTERMEDIARY MULE' : 'SUSPECT ORIGIN';
+        const entityShort = s.entity.length > 18 ? s.entity.substring(0, 16) + '…' : s.entity;
         const addrShort = `${s.address.substring(0, 6)}...${s.address.substring(s.address.length - 4)}`;
 
         svgHtml += `
           <g class="cursor-pointer group" onclick="openNodeInspector(${idx})">
-            <!-- Node outer halo -->
-            <circle cx="${x}" cy="${yCoord}" r="34" fill="#0F172A" stroke="${color}" stroke-width="2" />
-            <circle cx="${x}" cy="${yCoord}" r="26" fill="${color}" fill-opacity="0.15" />
-            <circle cx="${x}" cy="${yCoord}" r="8" fill="${color}" />
+            <!-- Node Outer Card -->
+            <rect x="${x - 65}" y="${yCoord - 45}" width="130" height="90" rx="12" fill="#0D281C" stroke="${color}" stroke-width="1.8" filter="url(#node-glow)" />
+            <rect x="${x - 65}" y="${yCoord - 45}" width="130" height="90" rx="12" fill="#0D281C" stroke="${color}" stroke-width="1.8" />
             
-            <!-- Node Role Label -->
-            <rect x="${x - 55}" y="${yCoord - 58}" width="110" height="18" rx="5" fill="#0F172A" stroke="${color}" stroke-width="1" stroke-opacity="0.5" />
-            <text x="${x}" y="${yCoord - 45}" fill="${color}" font-size="9" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif">
+            <!-- Node Role Badge -->
+            <rect x="${x - 55}" y="${yCoord - 36}" width="110" height="18" rx="5" fill="rgba(6,18,14,0.7)" stroke="${color}" stroke-width="0.8" />
+            <text x="${x}" y="${yCoord - 24}" fill="${color}" font-size="8.5" font-weight="700" text-anchor="middle" font-family="'DM Mono', monospace">
               ${roleLabel}
             </text>
 
-            <!-- Entity Name -->
-            <text x="${x}" y="${yCoord + 52}" fill="#F8FAFC" font-size="12" font-weight="600" text-anchor="middle" font-family="Inter, sans-serif">
+            <!-- Entity Label -->
+            <text x="${x}" y="${yCoord + 3}" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle" font-family="'Manrope', sans-serif">
               ${entityShort}
             </text>
 
             <!-- Address Monospace -->
-            <text x="${x}" y="${yCoord + 68}" fill="#64748B" font-size="10" text-anchor="middle" font-family="'JetBrains Mono', monospace">
+            <text x="${x}" y="${yCoord + 22}" fill="#90A096" font-size="9.5" text-anchor="middle" font-family="'DM Mono', monospace">
               ${addrShort}
             </text>
+
+            <circle cx="${x}" cy="${yCoord + 34}" r="3" fill="${color}" />
           </g>
         `;
       });
@@ -1622,62 +2317,62 @@
       group.innerHTML = svgHtml;
     }
 
-    // Syndicate SVG Graph
+    // Syndicate SVG Multi-Victim Mesh
     function renderSyndicateSvgGraph() {
       const svg = document.getElementById('network-svg');
       const group = document.getElementById('graph-zoom-group');
       const stats = document.getElementById('graph-stats-lbl');
       if (!svg || !group) return;
 
-      stats.innerText = "8 Nodes Resolved • Multi-Victim Convergence Mesh";
+      stats.innerText = "8 Nodes Resolved · Multi-Victim Convergence Mesh";
       resetGraphZoom();
 
       const victims = [
-        { label: "Victim 1 (Delhi)", y: 60, amt: "8.20 ETH", muleIdx: 0 },
-        { label: "Victim 2 (Mumbai)", y: 120, amt: "6.50 ETH", muleIdx: 0 },
-        { label: "Victim 3 (Blr)", y: 180, amt: "11.15 ETH", muleIdx: 1 },
-        { label: "Victim 4 (Hyd)", y: 240, amt: "5.40 ETH", muleIdx: 1 },
-        { label: "Victim 5 (Pune)", y: 300, amt: "7.20 ETH", muleIdx: 2 }
+        { label: "Victim 1 (Delhi)", y: 50, amt: "8.20 ETH", muleIdx: 0 },
+        { label: "Victim 2 (Mumbai)", y: 110, amt: "6.50 ETH", muleIdx: 0 },
+        { label: "Victim 3 (Blr)", y: 170, amt: "11.15 ETH", muleIdx: 1 },
+        { label: "Victim 4 (Hyd)", y: 230, amt: "5.40 ETH", muleIdx: 1 },
+        { label: "Victim 5 (Pune)", y: 290, amt: "7.20 ETH", muleIdx: 2 }
       ];
 
       const mules = [
-        { label: "Mule Alpha", y: 90, amt: "14.70 ETH" },
-        { label: "Mule Beta", y: 210, amt: "16.55 ETH" },
-        { label: "Mule Gamma", y: 300, amt: "7.20 ETH" }
+        { label: "Mule Alpha", y: 80, amt: "14.70 ETH" },
+        { label: "Mule Beta", y: 200, amt: "16.55 ETH" },
+        { label: "Mule Gamma", y: 290, amt: "7.20 ETH" }
       ];
 
-      const hub = { label: "Syndicate Hub (0x9b48...a100)", amt: "38.45 ETH", y: 180 };
-      const vasp = { label: "Binance Hot Wallet 6", amt: "38.45 ETH (₹92.28L)", y: 180 };
+      const hub = { label: "Syndicate Hub", amt: "38.45 ETH", y: 170 };
+      const vasp = { label: "Binance Hot Wallet 6", amt: "38.45 ETH (₹92.28L)", y: 170 };
 
       let svgHtml = '';
 
       // Edges: Victims -> Mules
-      victims.forEach((v, i) => {
+      victims.forEach(v => {
         const targetMule = mules[v.muleIdx];
         svgHtml += `
-          <line x1="120" y1="${v.y}" x2="360" y2="${targetMule.y}" stroke="#3B82F6" stroke-width="1.5" stroke-dasharray="4 4" class="animate-flow" marker-end="url(#arrow-blue)" />
+          <path d="M 140 ${v.y} Q 250 ${(v.y + targetMule.y) / 2} 360 ${targetMule.y}" fill="none" stroke="#FF6676" stroke-width="1.5" stroke-dasharray="4 4" class="animate-flow" marker-end="url(#arrow-red)" />
         `;
       });
 
       // Edges: Mules -> Hub
       mules.forEach(m => {
         svgHtml += `
-          <line x1="360" y1="${m.y}" x2="620" y2="${hub.y}" stroke="#F59E0B" stroke-width="2" stroke-dasharray="5 5" class="animate-flow" marker-end="url(#arrow-amber)" />
+          <path d="M 360 ${m.y} Q 480 ${(m.y + hub.y) / 2} 620 ${hub.y}" fill="none" stroke="#F4B86B" stroke-width="2" stroke-dasharray="5 5" class="animate-flow" marker-end="url(#arrow-amber)" />
         `;
       });
 
       // Edge: Hub -> VASP
       svgHtml += `
-        <line x1="620" y1="${hub.y}" x2="880" y2="${vasp.y}" stroke="#10B981" stroke-width="2.5" stroke-dasharray="6 6" class="animate-flow" marker-end="url(#arrow-red)" />
+        <path d="M 620 ${hub.y} Q 740 ${hub.y} 860 ${vasp.y}" fill="none" stroke="#52D59D" stroke-width="2.5" stroke-dasharray="6 6" class="animate-flow" marker-end="url(#arrow-blue)" />
       `;
 
       // Render Victim Nodes
       victims.forEach(v => {
         svgHtml += `
           <g class="cursor-pointer" onclick="openNodeInspector(0)">
-            <circle cx="120" cy="${v.y}" r="16" fill="#0F172A" stroke="#3B82F6" stroke-width="1.5" />
-            <circle cx="120" cy="${v.y}" r="4" fill="#3B82F6" />
-            <text x="120" y="${v.y - 20}" fill="#94A3B8" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">${v.label}</text>
+            <circle cx="140" cy="${v.y}" r="18" fill="#0D281C" stroke="#FF6676" stroke-width="1.5" />
+            <circle cx="140" cy="${v.y}" r="5" fill="#FF6676" />
+            <text x="140" y="${v.y - 22}" fill="#FFAAA1" font-size="9" text-anchor="middle" font-family="'DM Mono'">${v.label}</text>
           </g>
         `;
       });
@@ -1686,9 +2381,9 @@
       mules.forEach(m => {
         svgHtml += `
           <g class="cursor-pointer" onclick="openNodeInspector(1)">
-            <circle cx="360" cy="${m.y}" r="22" fill="#0F172A" stroke="#F59E0B" stroke-width="2" />
-            <circle cx="360" cy="${m.y}" r="6" fill="#F59E0B" />
-            <text x="360" y="${m.y - 28}" fill="#F59E0B" font-size="10" font-weight="600" text-anchor="middle">${m.label}</text>
+            <circle cx="360" cy="${m.y}" r="22" fill="#0D281C" stroke="#F4B86B" stroke-width="2" />
+            <circle cx="360" cy="${m.y}" r="6" fill="#F4B86B" />
+            <text x="360" y="${m.y - 28}" fill="#F4B86B" font-size="10" font-weight="700" text-anchor="middle" font-family="'DM Mono'">${m.label}</text>
           </g>
         `;
       });
@@ -1696,27 +2391,27 @@
       // Hub Node
       svgHtml += `
         <g class="cursor-pointer" onclick="openNodeInspector(1)">
-          <circle cx="620" cy="${hub.y}" r="28" fill="#0F172A" stroke="#EF4444" stroke-width="2" />
-          <circle cx="620" cy="${hub.y}" r="8" fill="#EF4444" />
-          <text x="620" y="${hub.y - 36}" fill="#EF4444" font-size="11" font-weight="700" text-anchor="middle">Aggregation Hub</text>
-          <text x="620" y="${hub.y + 45}" fill="#E2E8F0" font-size="11" text-anchor="middle" font-family="'JetBrains Mono'">38.45 ETH</text>
+          <circle cx="620" cy="${hub.y}" r="28" fill="#0D281C" stroke="#D7B866" stroke-width="2.5" />
+          <circle cx="620" cy="${hub.y}" r="8" fill="#D7B866" />
+          <text x="620" y="${hub.y - 36}" fill="#D7B866" font-size="11" font-weight="800" text-anchor="middle">Aggregation Hub</text>
+          <text x="620" y="${hub.y + 44}" fill="#E8EEF8" font-size="10.5" text-anchor="middle" font-family="'DM Mono'">38.45 ETH</text>
         </g>
       `;
 
       // VASP Node
       svgHtml += `
         <g class="cursor-pointer" onclick="openNodeInspector(2)">
-          <circle cx="880" cy="${vasp.y}" r="34" fill="#0F172A" stroke="#10B981" stroke-width="2.5" />
-          <circle cx="880" cy="${vasp.y}" r="10" fill="#10B981" />
-          <text x="880" y="${vasp.y - 42}" fill="#10B981" font-size="12" font-weight="700" text-anchor="middle">Binance VASP</text>
-          <text x="880" y="${vasp.y + 52}" fill="#F8FAFC" font-size="12" font-weight="600" text-anchor="middle">₹92.28L Freeze</text>
+          <circle cx="860" cy="${vasp.y}" r="34" fill="#0D281C" stroke="#52D59D" stroke-width="2.5" />
+          <circle cx="860" cy="${vasp.y}" r="10" fill="#52D59D" />
+          <text x="860" y="${vasp.y - 42}" fill="#52D59D" font-size="12" font-weight="800" text-anchor="middle">Binance VASP</text>
+          <text x="860" y="${vasp.y + 50}" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle">₹92.28L Freeze</text>
         </g>
       `;
 
       group.innerHTML = svgHtml;
     }
 
-    // Stripe-Grade Minimalist Evidence Ledger Table
+    // Stripe-Grade Evidence Ledger Table
     function renderLedgerTable(steps, parentData) {
       const tbody = document.getElementById('ledger-table-body');
       const chainKey = parentData.chain || (parentData.chainName && parentData.chainName.toLowerCase().includes('polygon') ? 'polygon' : 'ethereum');
@@ -1729,9 +2424,11 @@
 
       tbody.innerHTML = '';
       const badge = document.getElementById('ledger-count-badge');
+      const walletsCount = document.getElementById('metric-wallets-count');
 
       if (parentData.rawTxs && parentData.rawTxs.length > 0) {
         badge.innerText = `${parentData.rawTxs.length} On-Chain Records`;
+        if (walletsCount) walletsCount.innerText = `${parentData.rawTxs.length} Records`;
         
         parentData.rawTxs.forEach((t, i) => {
           const row = document.createElement('tr');
@@ -1776,7 +2473,7 @@
             </td>
             <td class="py-4 px-5 text-right whitespace-nowrap">
               <div class="flex items-center justify-end gap-2">
-                <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 text-slate-400 hover:text-blue-400 transition" title="View on Blockchain Explorer">
+                <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 text-slate-400 hover:text-amber-300 transition" title="View on Blockchain Explorer">
                   <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                 </a>
                 <button onclick='openFreezeNoticeModal(${JSON.stringify(t)})' class="p-1.5 text-slate-400 hover:text-emerald-400 transition" title="Draft Section 91 Notice">
@@ -1788,8 +2485,8 @@
           tbody.appendChild(row);
         });
       } else {
-        // Fallback to steps
         badge.innerText = `${steps.length} Verified Records`;
+        if (walletsCount) walletsCount.innerText = `${steps.length} Verified`;
 
         steps.forEach((s, idx) => {
           const row = document.createElement('tr');
@@ -1827,7 +2524,7 @@
             </td>
             <td class="py-4 px-5 text-right whitespace-nowrap">
               <div class="flex items-center justify-end gap-2">
-                <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 text-slate-400 hover:text-blue-400 transition" title="View on Blockchain Explorer">
+                <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" class="p-1.5 text-slate-400 hover:text-amber-300 transition" title="View on Blockchain Explorer">
                   <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                 </a>
                 <button onclick="openNodeInspector(${idx})" class="p-1.5 text-slate-400 hover:text-slate-200 transition" title="Inspect Node Details">
@@ -1881,7 +2578,7 @@
       content.innerHTML = `
         <div class="flex items-center justify-between border-b border-slate-800 pb-4">
           <div class="flex items-center gap-2.5">
-            <span class="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-mono text-sm">
+            <span class="w-8 h-8 rounded-lg bg-[rgba(215,184,102,0.15)] border border-[rgba(215,184,102,0.3)] text-[var(--gold)] flex items-center justify-center font-bold font-mono text-sm">
               #${step.step}
             </span>
             <div>
@@ -1894,10 +2591,9 @@
           </button>
         </div>
 
-        <!-- Address & Identification -->
         <div class="rounded-xl bg-slate-950 p-4 border border-slate-800 space-y-2">
           <div class="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">Wallet Address</div>
-          <div class="font-mono text-xs text-blue-300 break-all bg-slate-900/80 p-2.5 rounded border border-slate-800">
+          <div class="font-mono text-xs text-[var(--gold)] break-all bg-slate-900/80 p-2.5 rounded border border-slate-800">
             ${step.address}
           </div>
           <div class="flex items-center justify-between pt-1 text-xs">
@@ -1910,7 +2606,6 @@
           </div>
         </div>
 
-        <!-- Metrics Cards -->
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
             <div class="text-[11px] text-slate-400 uppercase font-medium">Traced Volume</div>
@@ -1918,13 +2613,12 @@
             <div class="text-[10px] text-emerald-400 font-mono">${step.inr}</div>
           </div>
           <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-            <div class="text-[11px] text-slate-400 uppercase font-medium">Node Classification</div>
+            <div class="text-[11px] text-slate-400 uppercase font-medium">Classification</div>
             <div class="text-sm font-bold text-white mt-1 capitalize">${step.type}</div>
             <div class="text-[10px] text-slate-500">Autonomous Tag</div>
           </div>
         </div>
 
-        <!-- Forensic Assessment -->
         <div class="space-y-2">
           <div class="text-xs font-bold text-white">Investigative Context</div>
           <div class="text-xs text-slate-300 bg-slate-950 p-3.5 rounded-xl border border-slate-800 leading-relaxed">
@@ -1932,15 +2626,13 @@
           </div>
         </div>
 
-        <!-- Transaction Evidence Hash -->
         <div class="space-y-2">
-          <div class="text-xs font-bold text-white">Associated Transaction Hash</div>
+          <div class="text-xs font-bold text-white">Transaction Hash</div>
           <div class="font-mono text-[11px] text-slate-400 bg-slate-950 p-3 rounded-xl border border-slate-800 break-all">
             ${step.txHash}
           </div>
         </div>
 
-        <!-- Legal Action Directive -->
         <div class="pt-2">
           <button onclick="openFreezeNoticeModal()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-gavel text-xs"></i>
@@ -2017,7 +2709,7 @@ c) PRESERVE ALL RELEVANT SERVER AND TRANSACTION LOGS for statutory court product
 4. COMPLIANCE TIMELINE:
 As an entity processing digital transactions within Indian jurisdiction, compliance is mandatory within FOUR (4) HOURS of receipt of this notice. Non-compliance shall attract penal action under Section 175/188 of the Indian Penal Code (IPC) / corresponding provisions of Bharatiya Nyaya Sanhita (BNS).
 
-Investigating Officer Signature: [DIGITALLY SIGNED VIA AEGIS FORENSICS]
+Investigating Officer Signature: [DIGITALLY SIGNED VIA TRACEGRID FORENSICS]
 NCRP System Verification ID: I4C-CIS-26183-SEC91
 ================================================================================`;
 
@@ -2082,7 +2774,7 @@ NCRP System Verification ID: I4C-CIS-26183-SEC91
       traceLiveWallet(val);
     }
 
-    // Listen for input changes to toggle clear button
+    // Clear Button Input Watcher
     const input = document.getElementById('search-input');
     const btnClear = document.getElementById('btn-clear-search');
     if (input && btnClear) {
@@ -2095,7 +2787,7 @@ NCRP System Verification ID: I4C-CIS-26183-SEC91
       });
     }
 
-    // Initialize Default Ethereum Case on Page Load
+    // Page Load Initialization
     window.addEventListener('DOMContentLoaded', () => {
       renderChainCase(MULTI_CHAIN_CASES['ethereum']);
     });
