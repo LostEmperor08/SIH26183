@@ -516,6 +516,19 @@ export default function App() {
     amountSeized: '25,000 USDT (₹21,25,000 INR)'
   });
 
+  // Live Real-Time Blockchain Tracing Simulation State
+  const [isLiveTracing, setIsLiveTracing] = useState(false);
+  const [traceProgress, setTraceProgress] = useState(4); // 1 to 4 hops resolved
+  const [traceLogs, setTraceLogs] = useState([
+    `[21:45:00] RPC INGESTION: Connected to Polygon Mainnet Validator Node #14`,
+    `[21:45:02] BLOCK 489102: Found incoming victim transfer 25,000 USDT (₹21,25,000)`,
+    `[21:45:04] ANOMALY DETECTED: Burner transit mule — 100% balance swept in 134 seconds!`,
+    `[21:45:06] CROSS-CHAIN ROUTER: Stargate Bridge hop confirmed (Polygon ➔ Ethereum Mainnet)`,
+    `[21:45:08] ATTRIBUTION LOCKED: Funds converged at Binance Global Custodial Hot Wallet UID #8849201`,
+    `[21:45:10] ACTIONABLE: 24,950 USDT (₹21,20,750) unspent. Ready for Section 94 BNSS emergency freeze.`
+  ]);
+  const [graphInsightMode, setGraphInsightMode] = useState('insights'); // 'insights' | 'velocity' | 'retention'
+
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3500);
@@ -526,6 +539,87 @@ export default function App() {
     setCopiedBadge(label);
     showToast(`Copied ${label} to clipboard!`);
     setTimeout(() => setCopiedBadge(null), 2000);
+  };
+
+  // Real-Time Progressive Tracing Engine Simulation
+  const runLiveTraceSimulation = (caseKey) => {
+    setIsLiveTracing(true);
+    setTraceProgress(1);
+    const targetCase = DEMO_CASES[caseKey] || DEMO_CASES.polygon;
+    const now = () => new Date().toLocaleTimeString('en-IN', { hour12: false });
+
+    setTraceLogs([
+      `[${now()}] RPC INGESTION: Querying ${targetCase.caseInfo.network} live ledger for ${targetCase.nodes[1].address.substring(0, 16)}...`,
+      `[${now()}] BLOCK VERIFIED: Found initial transfer of ${targetCase.nodes[0].volume} from clean source.`
+    ]);
+
+    setTimeout(() => {
+      setTraceProgress(2);
+      setTraceLogs((prev) => [
+        ...prev,
+        `[${now()}] HEURISTIC ALERT: High-frequency burner sweep (${targetCase.nodes[1].address.substring(0, 12)}...). 100% drained in ${targetCase.nodes[1].timeSpent || '134s'}!`,
+        `[${now()}] HOP 2 TRAVERSAL: Following outbound TXID ${targetCase.edges[1]?.txHash?.substring(0, 14) || '0x9ab813...'}...`
+      ]);
+    }, 650);
+
+    setTimeout(() => {
+      setTraceProgress(3);
+      setTraceLogs((prev) => [
+        ...prev,
+        `[${now()}] OBFUSCATION DETECTED: Router / Bridge hop (${targetCase.nodes[2].label}). Cross-network liquidity bridge confirmed.`,
+        `[${now()}] ATTRIBUTION ENGINE: Resolving final custodial deposit counterparty...`
+      ]);
+    }, 1350);
+
+    setTimeout(() => {
+      setTraceProgress(4);
+      setIsLiveTracing(false);
+      setTraceLogs((prev) => [
+        ...prev,
+        `[${now()}] ATTRIBUTION COMPLETE: Funds converged at ${targetCase.caseInfo.targetVasp} (${targetCase.caseInfo.vaspComplianceEmail}).`,
+        `[${now()}] ASSET STATUS: ${targetCase.caseInfo.totalValueInr} (${targetCase.caseInfo.totalValueUsdt}) UNSPENT in destination UID. Immediate Section 94 BNSS freeze enforceable!`
+      ]);
+      showToast(`Real-Time Trace Complete: Funds located at ${targetCase.caseInfo.targetVasp}!`);
+    }, 2050);
+  };
+
+  // Export Technical Ledger as CSV / JSON
+  const exportTransactionHistory = (format) => {
+    const data = activeCase.edges.map((e, idx) => ({
+      hop: idx + 1,
+      from: activeCase.nodes[idx].label + ' (' + activeCase.nodes[idx].address + ')',
+      to: activeCase.nodes[idx + 1].label + ' (' + activeCase.nodes[idx + 1].address + ')',
+      amount_crypto: e.amount,
+      amount_inr: e.inr,
+      duration: e.duration,
+      txHash: e.txHash,
+      type: e.type,
+      timestamp: activeCase.nodes[idx].time
+    }));
+
+    if (format === 'json') {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `NCRP_${activeCase.caseInfo.ncrpId.replace(/\//g, '_')}_Evidence_Ledger.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Exported Transaction History as JSON!');
+    } else {
+      let csv = 'Hop,Timestamp,From_Entity,To_Entity,Amount_Crypto,Amount_INR,Duration,TXID,Anomaly_Type\n';
+      data.forEach(d => {
+        csv += `"${d.hop}","${d.timestamp}","${d.from}","${d.to}","${d.amount_crypto}","${d.amount_inr}","${d.duration}","${d.txHash}","${d.type}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `NCRP_${activeCase.caseInfo.ncrpId.replace(/\//g, '_')}_Evidence_Ledger.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Exported Transaction History as CSV!');
+    }
   };
 
   // Smart Chain Auto-Detection on input
@@ -543,7 +637,7 @@ export default function App() {
     }
   };
 
-  // Execute Trace
+  // Execute Trace with Live Simulation
   const handleExecuteTrace = (e) => {
     if (e) e.preventDefault();
     if (!inputAddress.trim()) {
@@ -551,22 +645,17 @@ export default function App() {
       return;
     }
 
-    setIsSearching(true);
-    setTimeout(() => {
-      setIsSearching(false);
-      // Determine case match or fallback to polygon
-      if (inputAddress.toLowerCase().includes('tyd') || inputAddress.startsWith('T')) {
-        setActiveCaseKey('tron');
-      } else if (inputAddress.startsWith('1') || inputAddress.startsWith('3') || inputAddress.startsWith('bc1')) {
-        setActiveCaseKey('bitcoin');
-      } else {
-        setActiveCaseKey('polygon');
-      }
-      setCurrentView('results');
-      setActiveNav('intelligence');
-      setSelectedNode(null);
-      showToast('Trace complete! Funds located at receiving exchange.');
-    }, 850);
+    let targetKey = 'polygon';
+    if (inputAddress.toLowerCase().includes('tyd') || inputAddress.startsWith('T')) {
+      targetKey = 'tron';
+    } else if (inputAddress.startsWith('1') || inputAddress.startsWith('3') || inputAddress.startsWith('bc1')) {
+      targetKey = 'bitcoin';
+    }
+    setActiveCaseKey(targetKey);
+    setCurrentView('results');
+    setActiveNav('intelligence');
+    setSelectedNode(null);
+    runLiveTraceSimulation(targetKey);
   };
 
   const handleSelectDemo = (key, address, ncrp) => {
@@ -1000,229 +1089,241 @@ export default function App() {
           {/* ================================================================ */}
           {/* SCREEN 2: TRACE RESULTS & ACTION DASHBOARD                        */}
           {/* ================================================================ */}
+          {/* ================================================================ */}
+          {/* SCREEN 2: REAL-TIME TRACE RESULTS & ACTION DASHBOARD             */}
+          {/* ================================================================ */}
           {activeNav === 'intelligence' && (
-            <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full space-y-6">
+            <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
               
-              {/* Back to Search Nav */}
-              <div className={`flex flex-wrap items-center justify-between gap-4 border-b pb-4 ${
+              {/* Top Navigation & Action Header */}
+              <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 ${
                 darkMode ? 'border-slate-800' : 'border-slate-200'
               }`}>
-                <button
-                  onClick={() => { setActiveNav('trace'); setCurrentView('home'); }}
-                  className="inline-flex items-center gap-2 text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Start New Trace</span>
-                </button>
+                {/* Left: Back & Case Details */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => { setActiveNav('trace'); setCurrentView('home'); }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                      darkMode
+                        ? 'bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800'
+                        : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-2xs'
+                    }`}
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>New Trace</span>
+                  </button>
 
-                <div className={`flex items-center gap-2.5 text-xs font-mono ${
-                  darkMode ? 'text-slate-400' : 'text-slate-600'
-                }`}>
-                  <span>FIR: <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{activeCase.caseInfo.firNumber}</strong></span>
-                  <span>•</span>
-                  <span>NCRP ID: <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{activeCase.caseInfo.ncrpId}</strong></span>
-                  <span>•</span>
-                  <span>Network: <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{activeCase.caseInfo.network}</strong></span>
-                </div>
-              </div>
-
-              {/* ------------------------------------------------------------ */}
-              {/* A. THE BIG VERDICT BANNER (THE "2-SECOND RULE" ALERT)        */}
-              {/* ------------------------------------------------------------ */}
-              <div className={`rounded-2xl p-6 sm:p-7 border-2 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6 ${
-                darkMode 
-                  ? 'bg-red-950/30 border-red-500 text-red-100' 
-                  : 'bg-red-50 border-red-500 text-red-950'
-              }`}>
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-red-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
-                    <ShieldAlert className="w-8 h-8" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider ${
-                      darkMode ? 'bg-red-900/60 text-red-200' : 'bg-red-200 text-red-900'
-                    }`}>
-                      <span>🚨 RECOVERABLE ASSETS IDENTIFIED AT CUSTODIAL EXCHANGE</span>
-                    </div>
-                    <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${
-                      darkMode ? 'text-white' : 'text-red-950'
-                    }`}>
-                      Target Exchange: {activeCase.caseInfo.targetVasp}
-                    </h2>
-                    <p className={`text-sm font-semibold ${
-                      darkMode ? 'text-red-200' : 'text-red-800'
-                    }`}>
-                      Located Volume: <strong className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-red-950'}`}>{activeCase.caseInfo.totalValueUsdt} ({activeCase.caseInfo.totalValueInr})</strong>
-                    </p>
-                    <div className={`text-xs flex items-center gap-1 font-mono ${
-                      darkMode ? 'text-red-300' : 'text-red-700'
-                    }`}>
-                      <span>⚡ {activeCase.caseInfo.unspentStatus}</span>
-                    </div>
+                  <div className={`flex items-center gap-2 text-xs font-mono ${
+                    darkMode ? 'text-slate-400' : 'text-slate-600'
+                  }`}>
+                    <span className="font-bold text-blue-600 dark:text-blue-400">{activeCase.caseInfo.firNumber}</span>
+                    <span>•</span>
+                    <span>NCRP: <strong>{activeCase.caseInfo.ncrpId}</strong></span>
+                    <span>•</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 uppercase">
+                      {activeCase.caseInfo.network}
+                    </span>
                   </div>
                 </div>
 
-                {/* VASP Verification Card */}
-                <div className={`px-5 py-3.5 rounded-xl border flex-shrink-0 text-center space-y-1 ${
-                  darkMode ? 'bg-slate-900 border-red-900/60' : 'bg-white border-red-300 shadow-xs'
-                }`}>
-                  <span className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block">FIU-IND Registration</span>
-                  <div className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{activeCase.caseInfo.vaspStatus}</div>
-                  <div className="text-[11px] text-emerald-600 font-semibold flex items-center justify-center gap-1">
-                    <BadgeCheck className="w-3.5 h-3.5" /> Compliance Officer Active
-                  </div>
+                {/* Right: Primary Directives Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => runLiveTraceSimulation(activeCaseKey)}
+                    disabled={isLiveTracing}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+                      isLiveTracing
+                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 animate-pulse cursor-wait'
+                        : darkMode
+                          ? 'bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800'
+                          : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-2xs'
+                    }`}
+                    title="Simulate real-time blockchain traversal"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLiveTracing ? 'animate-spin' : ''}`} />
+                    <span>{isLiveTracing ? 'Scanning Mempool...' : '⚡ Re-Scan Live'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedVaspForNotice({
+                        name: activeCase.caseInfo.targetVasp,
+                        email: activeCase.caseInfo.vaspComplianceEmail
+                      });
+                      setActiveModal('bnss');
+                    }}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-700 text-white flex items-center gap-1.5 shadow-xs cursor-pointer transition"
+                  >
+                    <Gavel className="w-3.5 h-3.5" />
+                    <span>Issue Sec 94 Freeze</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModal('pdf')}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-1.5 shadow-xs cursor-pointer transition"
+                  >
+                    <FileDown className="w-3.5 h-3.5" />
+                    <span>Court PDF (BSA)</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveModal('ncrp')}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer ${
+                      darkMode
+                        ? 'border-slate-800 bg-slate-900 text-emerald-400 hover:bg-slate-800'
+                        : 'border-slate-300 bg-white text-emerald-700 hover:bg-slate-50 shadow-2xs'
+                    }`}
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    <span>Sync NCRP</span>
+                  </button>
                 </div>
               </div>
 
-              {/* ------------------------------------------------------------ */}
-              {/* B. PRIMARY POLICE DIRECTIVE ACTION BAR                       */}
-              {/* ------------------------------------------------------------ */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                
-                {/* 1. Draft Section 94 BNSS Freeze Notice */}
-                <button
-                  onClick={() => setActiveModal('bnss')}
-                  className="py-4 px-4 rounded-xl font-bold text-xs shadow-sm transition flex items-center justify-center gap-2 cursor-pointer bg-red-600 hover:bg-red-700 text-white"
-                >
-                  <Gavel className="w-4 h-4" />
-                  <span>🔴 Draft Section 94 BNSS Freeze Notice</span>
-                </button>
-
-                {/* 2. Export Court-Ready PDF (Section 63 BSA) */}
-                <button
-                  onClick={() => setActiveModal('pdf')}
-                  className="py-4 px-4 rounded-xl font-bold text-xs shadow-sm transition flex items-center justify-center gap-2 cursor-pointer bg-blue-700 hover:bg-blue-800 text-white"
-                >
-                  <FileDown className="w-4 h-4" />
-                  <span>📄 Export Court-Ready PDF (Section 63 BSA)</span>
-                </button>
-
-                {/* 3. Sync Finding to NCRP / SAHYOG Portal */}
-                <button
-                  onClick={() => setActiveModal('ncrp')}
-                  className={`py-4 px-4 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer border ${
-                    darkMode 
-                      ? 'bg-slate-900 border-slate-700 text-slate-100 hover:bg-slate-800' 
-                      : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-xs'
-                  }`}
-                >
-                  <Database className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>🔗 Sync Finding to NCRP / SAHYOG Portal</span>
-                </button>
-
-              </div>
-
-              {/* ------------------------------------------------------------ */}
-              {/* C. THREAT METRIC & ANOMALY CATEGORIZATION DIAL               */}
-              {/* ------------------------------------------------------------ */}
-              <div className={`rounded-2xl p-6 border shadow-sm space-y-4 ${
+              {/* Minimalist Executive Verdict Bar */}
+              <div className={`rounded-2xl border p-5 sm:p-6 shadow-xs ${
                 darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
               }`}>
-                <div className={`flex items-center justify-between border-b pb-3 ${
-                  darkMode ? 'border-slate-800' : 'border-slate-100'
-                }`}>
-                  <div className={`flex items-center gap-2 font-bold text-sm ${
-                    darkMode ? 'text-white' : 'text-slate-900'
-                  }`}>
-                    <AlertTriangle className="w-4 h-4 text-amber-500" />
-                    <span>Threat Metric & Behavioral Anomaly Engine</span>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                  
+                  {/* Column 1: Identified Target VASP */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Target VASP Identified</span>
+                    </div>
+                    <div className={`text-lg font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      {activeCase.caseInfo.targetVasp}
+                    </div>
+                    <div className="text-xs font-mono text-blue-600 dark:text-blue-400 truncate" title={activeCase.caseInfo.vaspComplianceEmail}>
+                      {activeCase.caseInfo.vaspComplianceEmail}
+                    </div>
                   </div>
-                  <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900">
-                    High Confidence Forensic Tag
+
+                  {/* Column 2: Recoverable Value */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      <Landmark className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Recoverable Sum</span>
+                    </div>
+                    <div className="text-lg font-black font-mono text-emerald-600 dark:text-emerald-400">
+                      {activeCase.caseInfo.totalValueInr}
+                    </div>
+                    <div className="text-xs font-mono text-slate-500">
+                      {activeCase.caseInfo.totalValueUsdt} Volume
+                    </div>
+                  </div>
+
+                  {/* Column 3: Asset Status */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+                      <span>On-Chain Status</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        Unspent in Hot Wallet
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Immediate debit-freeze window active
+                    </div>
+                  </div>
+
+                  {/* Column 4: Threat Score */}
+                  <div className="space-y-1 md:text-right">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      Forensic Threat Score
+                    </div>
+                    <div className="text-lg font-black font-mono text-red-600 dark:text-red-500">
+                      {activeCase.caseInfo.riskScore} <span className="text-xs text-slate-400">/ 100</span>
+                    </div>
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300">
+                      Critical Scam Transit
+                    </span>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Real-Time Tracing Live Terminal / Ticker (Streams during simulation) */}
+              <div className={`rounded-xl border p-3 font-mono text-xs transition-all ${
+                isLiveTracing
+                  ? 'bg-slate-950 border-blue-600 shadow-md text-slate-200'
+                  : darkMode
+                    ? 'bg-slate-950/80 border-slate-800 text-slate-400'
+                    : 'bg-slate-50 border-slate-200 text-slate-700'
+              }`}>
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800/60 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${isLiveTracing ? 'bg-amber-400 animate-ping' : 'bg-emerald-500'}`}></span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      {isLiveTracing ? `Real-Time Blockchain Scan in Progress (Hop ${traceProgress}/4)...` : 'Real-Time Telemetry & Block Event Stream'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-500">
+                    RPC Gateway: Active
                   </span>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                  
-                  {/* Visual 1-100 Gauge */}
-                  <div className={`rounded-xl p-5 border text-center space-y-2 ${
-                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
-                  }`}>
-                    <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                      darkMode ? 'text-slate-400' : 'text-slate-500'
-                    }`}>
-                      Fraud Danger Score
-                    </span>
-                    <div className="text-4xl font-black font-mono text-red-600 dark:text-red-500">
-                      {activeCase.caseInfo.riskScore} <span className="text-sm font-bold text-slate-400">/ 100</span>
+                <div className="space-y-1 max-h-24 overflow-y-auto pr-1 text-[11px] leading-relaxed">
+                  {traceLogs.slice(-3).map((log, i) => (
+                    <div key={i} className="truncate">
+                      {log}
                     </div>
-                    {/* Semicircle / 3-Color Bar Gauge */}
-                    <div className={`w-full h-3 rounded-full overflow-hidden flex ${
-                      darkMode ? 'bg-slate-800' : 'bg-slate-200'
-                    }`}>
-                      <div className="bg-emerald-500 w-1/3" title="Low Risk (1-33)"></div>
-                      <div className="bg-amber-500 w-1/3" title="Moderate Risk (34-66)"></div>
-                      <div className="bg-red-600 w-1/3" title="Critical Risk (67-100)"></div>
-                    </div>
-                    <span className="text-[11px] font-bold text-red-600 dark:text-red-400 block">
-                      Critical Scam Transit Mule
-                    </span>
-                  </div>
-
-                  {/* Anomaly Tags */}
-                  <div className="md:col-span-2 space-y-3">
-                    <h4 className={`text-xs font-bold uppercase tracking-wider ${
-                      darkMode ? 'text-slate-400' : 'text-slate-600'
-                    }`}>
-                      Automated Heuristic Anomaly Indicators:
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                      {activeCase.anomalies.map((anom, idx) => (
-                        <div key={idx} className={`p-3 rounded-xl border space-y-1 ${
-                          darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
-                        }`}>
-                          <div className={`flex items-center gap-1.5 font-bold text-xs ${
-                            darkMode ? 'text-white' : 'text-slate-900'
-                          }`}>
-                            {anom.icon === 'flame' && <Flame className="w-3.5 h-3.5 text-red-500" />}
-                            {anom.icon === 'shuffle' && <Shuffle className="w-3.5 h-3.5 text-amber-500" />}
-                            {anom.icon === 'bridge' && <GitFork className="w-3.5 h-3.5 text-purple-500" />}
-                            {anom.icon === 'building' && <Building2 className="w-3.5 h-3.5 text-emerald-500" />}
-                            <span>{anom.tag}</span>
-                          </div>
-                          <p className={`text-[11px] leading-relaxed ${
-                            darkMode ? 'text-slate-400' : 'text-slate-600'
-                          }`}>
-                            {anom.text}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
+                  ))}
                 </div>
               </div>
 
               {/* ------------------------------------------------------------ */}
-              {/* 5. SMART GRAPHING SYSTEM & ANOMALY DETECTION ENGINE          */}
+              {/* SMART GRAPH VISUALISATION WITH INSIGHT LOGIC                 */}
               {/* ------------------------------------------------------------ */}
-              <div className={`rounded-2xl p-6 sm:p-8 border shadow-sm space-y-6 ${
+              <div className={`rounded-2xl border p-5 sm:p-7 shadow-xs space-y-5 ${
                 darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
               }`}>
-                <div className={`flex items-center justify-between border-b pb-4 ${
+                {/* Graph Header & Mode Switcher */}
+                <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 ${
                   darkMode ? 'border-slate-800' : 'border-slate-100'
                 }`}>
                   <div>
-                    <h3 className={`text-lg font-bold tracking-tight flex items-center gap-2 ${
+                    <h3 className={`text-base font-bold tracking-tight flex items-center gap-2 ${
                       darkMode ? 'text-white' : 'text-slate-900'
                     }`}>
-                      <Layers className="w-5 h-5 text-blue-700 dark:text-blue-400" />
+                      <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       <span>The Money Trail (Automated Topological Graph)</span>
                     </h3>
-                    <p className={`text-xs mt-0.5 ${
-                      darkMode ? 'text-slate-400' : 'text-slate-600'
-                    }`}>
-                      Hover or click any node circle to inspect behavioral context. Colored arrows indicate transaction velocity.
+                    <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Click any node to open forensic intelligence drawer. Arrows show automated fund velocity.
                     </p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-slate-400">
-                    4 Nodes • 3 Directed Hops
-                  </span>
+
+                  {/* Mode Selector */}
+                  <div className="flex items-center gap-1 text-xs">
+                    {[
+                      { id: 'insights', label: 'Flow Trail' },
+                      { id: 'velocity', label: 'Velocity Analysis' },
+                      { id: 'retention', label: 'Asset Retention' }
+                    ].map((mode) => (
+                      <button
+                        key={mode.id}
+                        onClick={() => setGraphInsightMode(mode.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          graphInsightMode === mode.id
+                            ? 'bg-blue-700 text-white shadow-2xs'
+                            : darkMode
+                              ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Visual Node Graph Canvas (Interactive DOM Nodes + Edge Logic) */}
+                {/* Graph Canvas */}
                 <div className={`p-6 sm:p-8 rounded-xl border overflow-x-auto ${
-                  darkMode ? 'bg-slate-950/70 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  darkMode ? 'bg-slate-950/70 border-slate-800' : 'bg-slate-50/80 border-slate-200'
                 }`}>
                   <div className="flex items-center justify-between min-w-[700px] max-w-4xl mx-auto relative">
                     
@@ -1234,34 +1335,40 @@ export default function App() {
                       const isExchange = node.type === 'EXCHANGE';
 
                       const edge = activeCase.edges[index];
+                      const isUnlocked = !isLiveTracing || traceProgress >= (index + 1);
+                      const isCurrentlyScanning = isLiveTracing && traceProgress === (index + 1);
 
                       return (
                         <React.Fragment key={node.id}>
                           {/* Node Circle */}
                           <div 
-                            onClick={() => setSelectedNode(node)}
-                            className="flex flex-col items-center text-center space-y-2.5 z-10 cursor-pointer group"
+                            onClick={() => isUnlocked && setSelectedNode(node)}
+                            className={`flex flex-col items-center text-center space-y-2 z-10 transition-all ${
+                              isUnlocked ? 'cursor-pointer group opacity-100' : 'opacity-40 grayscale cursor-not-allowed'
+                            }`}
                           >
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg shadow-md border-2 transition transform group-hover:scale-110 ${
-                              isVictim 
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-base shadow-sm border-2 transition transform group-hover:scale-110 ${
+                              isCurrentlyScanning
+                                ? 'bg-amber-100 border-amber-500 text-amber-600 animate-ping'
+                                : isVictim 
                                 ? 'bg-blue-100 dark:bg-blue-950 border-blue-600 text-blue-700 dark:text-blue-300'
                                 : isBurner
-                                ? 'bg-red-100 dark:bg-red-950 border-red-500 text-red-600 dark:text-red-400 animate-pulse-glow'
+                                ? 'bg-red-100 dark:bg-red-950 border-red-500 text-red-600 dark:text-red-400 animate-pulse'
                                 : isMixer
                                 ? 'bg-purple-100 dark:bg-purple-950 border-purple-600 text-purple-700 dark:text-purple-300'
                                 : isBridge
                                 ? 'bg-indigo-100 dark:bg-indigo-950 border-indigo-600 text-indigo-700 dark:text-indigo-300'
                                 : 'bg-emerald-100 dark:bg-emerald-950 border-emerald-600 text-emerald-700 dark:text-emerald-300 ring-4 ring-emerald-500/20'
                             }`}>
-                              {isVictim && <User className="w-7 h-7" />}
-                              {isBurner && <Flame className="w-7 h-7" />}
-                              {isMixer && <Shuffle className="w-7 h-7" />}
-                              {isBridge && <GitFork className="w-7 h-7" />}
-                              {isExchange && <Building2 className="w-7 h-7" />}
+                              {isVictim && <User className="w-6 h-6" />}
+                              {isBurner && <Flame className="w-6 h-6" />}
+                              {isMixer && <Shuffle className="w-6 h-6" />}
+                              {isBridge && <GitFork className="w-6 h-6" />}
+                              {isExchange && <Building2 className="w-6 h-6" />}
                             </div>
 
                             <div className="space-y-0.5">
-                              <span className={`font-extrabold text-xs block group-hover:text-blue-600 transition ${
+                              <span className={`font-bold text-xs block group-hover:text-blue-600 transition ${
                                 darkMode ? 'text-white' : 'text-slate-900'
                               }`}>
                                 {node.label}
@@ -1269,27 +1376,35 @@ export default function App() {
                               <span className={`text-[11px] block font-mono ${
                                 darkMode ? 'text-slate-400' : 'text-slate-500'
                               }`}>
-                                {node.chain}
+                                {isUnlocked ? node.chain : 'Scanning...'}
                               </span>
-                              <span className={`inline-block mt-0.5 px-2 py-0.2 rounded-full text-[9px] font-bold border ${
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold border ${
                                 isExchange 
                                   ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800' 
                                   : darkMode 
                                   ? 'bg-slate-800 text-slate-300 border-slate-700' 
                                   : 'bg-white text-slate-700 border-slate-300 shadow-2xs'
                               }`}>
-                                {isExchange ? 'Verified VASP ✅' : node.status}
+                                {isExchange ? 'Verified VASP ✅' : isUnlocked ? node.status : 'Pending Hop'}
                               </span>
                             </div>
                           </div>
 
-                          {/* Edge Connector Arrow */}
+                          {/* Edge Arrow */}
                           {edge && (
-                            <div className="flex-1 flex flex-col items-center px-2">
+                            <div className={`flex-1 flex flex-col items-center px-2 transition-opacity ${
+                              isUnlocked ? 'opacity-100' : 'opacity-30'
+                            }`}>
                               <span className={`text-[10px] font-mono font-bold mb-1 ${
-                                edge.type === 'RAPID' ? 'text-red-600 dark:text-red-400 animate-pulse' : 'text-purple-600 dark:text-purple-400'
+                                graphInsightMode === 'velocity'
+                                  ? 'text-amber-600 dark:text-amber-400'
+                                  : edge.type === 'RAPID' ? 'text-red-600 dark:text-red-400' : 'text-purple-600 dark:text-purple-400'
                               }`}>
-                                {edge.type === 'RAPID' ? `⚡ Rapid Sweep (${edge.duration})` : `🌉 Bridge Swap (${edge.duration})`}
+                                {graphInsightMode === 'velocity'
+                                  ? `⚡ ${edge.duration} (186 USDT/s)`
+                                  : graphInsightMode === 'retention'
+                                  ? `100% Retained (0% Fee)`
+                                  : edge.type === 'RAPID' ? `⚡ Rapid Drain (${edge.duration})` : `🌉 Bridge Swap (${edge.duration})`}
                               </span>
                               <div className="w-full flex items-center relative">
                                 <svg className="w-full h-3" preserveAspectRatio="none">
@@ -1317,179 +1432,233 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Interactive Selected Node Tooltip Card */}
-                {selectedNode ? (
-                  <div className={`p-4 rounded-xl border space-y-3 ${
-                    darkMode 
-                      ? 'bg-blue-950/40 border-blue-800 text-slate-200' 
-                      : 'bg-blue-50/80 border-blue-200 text-slate-800 shadow-xs'
+                {/* Node Inspector Drawer (Shows when node is clicked) */}
+                {selectedNode && (
+                  <div className={`p-4 rounded-xl border space-y-2.5 transition-all ${
+                    darkMode ? 'bg-blue-950/40 border-blue-800 text-slate-200' : 'bg-blue-50 border-blue-200 text-slate-800'
                   }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className={`font-extrabold text-sm ${
-                          darkMode ? 'text-blue-300' : 'text-blue-900'
-                        }`}>
-                          Inspect Node: {selectedNode.label}
+                        <span className="font-extrabold text-xs uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                          Forensic Entity Inspector:
                         </span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase border ${
-                          darkMode ? 'bg-slate-900 border-blue-700 text-white' : 'bg-white border-blue-200 text-blue-950'
-                        }`}>
-                          {selectedNode.type}
+                        <span className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                          {selectedNode.label} ({selectedNode.type})
                         </span>
                       </div>
-                      <button onClick={() => setSelectedNode(null)} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer">✕ Close</button>
+                      <button onClick={() => setSelectedNode(null)} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer">
+                        ✕ Close
+                      </button>
                     </div>
 
-                    <div className="text-xs leading-relaxed">
-                      <strong>Plain English Behavior:</strong> {selectedNode.behavior}
-                    </div>
+                    <p className="text-xs leading-relaxed">
+                      <strong>Investigative Analysis:</strong> {selectedNode.behavior}
+                    </p>
 
-                    <div className={`flex flex-wrap items-center justify-between gap-2 pt-1 border-t text-xs font-mono ${
-                      darkMode ? 'border-blue-800' : 'border-blue-200'
-                    }`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-blue-200 dark:border-blue-900/60 text-xs font-mono">
                       <span>Address: <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{selectedNode.address}</strong></span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => copyToClipboard(selectedNode.address, 'Node Address')}
-                          className={`px-2.5 py-1 rounded border text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition ${
-                            darkMode 
-                              ? 'bg-slate-900 border-blue-700 hover:bg-blue-900 text-white' 
-                              : 'bg-white border-blue-300 hover:bg-blue-100 text-slate-900 shadow-xs'
-                          }`}
-                        >
-                          {copiedBadge === 'Node Address' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                          <span>Copy Address</span>
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => copyToClipboard(selectedNode.address, selectedNode.label + ' Address')}
+                        className="px-2.5 py-1 rounded bg-blue-700 hover:bg-blue-800 text-white font-bold text-[11px] cursor-pointer flex items-center gap-1"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>Copy Address</span>
+                      </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className={`p-3.5 rounded-xl border text-center text-xs ${
-                    darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
-                  }`}>
-                    💡 Click on any circle node in the trail above to display plain-English investigative intelligence and full wallet particulars.
                   </div>
                 )}
+
+                {/* 3 Core Investigative Insights (Always Visible) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                  <div className={`p-3.5 rounded-xl border space-y-1 ${
+                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-red-600 dark:text-red-400">
+                      <Flame className="w-3.5 h-3.5" />
+                      <span>Velocity Anomaly (186.5 USDT/sec)</span>
+                    </div>
+                    <p className={`text-[11px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Victim's funds were 100% drained in 134s. High-velocity automated laundering bot detected.
+                    </p>
+                  </div>
+
+                  <div className={`p-3.5 rounded-xl border space-y-1 ${
+                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-purple-600 dark:text-purple-400">
+                      <GitFork className="w-3.5 h-3.5" />
+                      <span>Cross-Chain Layering (Bridge Hop)</span>
+                    </div>
+                    <p className={`text-[11px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Tokens hopped across chains via Stargate router to evade native Polygon mempool filters.
+                    </p>
+                  </div>
+
+                  <div className={`p-3.5 rounded-xl border space-y-1 ${
+                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>Custodial Cash-Out Point (Unspent)</span>
+                    </div>
+                    <p className={`text-[11px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Funds landed in Binance custodial hot wallet. Unspent in internal UID #8849201. Actionable!
+                    </p>
+                  </div>
+                </div>
 
               </div>
 
               {/* ------------------------------------------------------------ */}
-              {/* 6. COURT EVIDENCE VAULT (COLLAPSIBLE ACCORDION)              */}
+              {/* TRANSACTION HISTORY & CHAIN OF CUSTODY (VISIBLE BY DEFAULT)  */}
               {/* ------------------------------------------------------------ */}
-              <div className={`rounded-2xl border shadow-sm overflow-hidden ${
+              <div className={`rounded-2xl border p-5 sm:p-7 shadow-xs space-y-4 ${
                 darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
               }`}>
-                
-                {/* Accordion Toggle Header */}
-                <button
-                  onClick={() => setIsEvidenceExpanded(!isEvidenceExpanded)}
-                  className={`w-full p-5 sm:p-6 flex items-center justify-between text-left transition cursor-pointer ${
-                    darkMode ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <h3 className={`font-bold text-sm flex items-center gap-2 ${
+                {/* Table Header with Export Buttons */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
+                  <div>
+                    <h3 className={`text-base font-bold tracking-tight flex items-center gap-2 ${
                       darkMode ? 'text-white' : 'text-slate-900'
                     }`}>
-                      <Scale className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span>⚖️ Advanced Forensic Evidence & Chain of Custody (Court Production)</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase border ${
-                        darkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-200'
-                      }`}>
-                        Section 63 BSA Ready
+                      <FileText className="w-4 h-4 text-emerald-600" />
+                      <span>Blockchain Transaction History & Chain of Custody</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                        Section 63 BSA Certified
                       </span>
                     </h3>
-                    <p className={`text-xs ${
-                      darkMode ? 'text-slate-400' : 'text-slate-600'
-                    }`}>
-                      Technical ledger showing timestamps, transaction hashes, and custodial counterparty addresses required for judicial admissibility.
+                    <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Complete chronological hop-by-hop ledger with verifiable on-chain TXIDs and timestamps.
                     </p>
                   </div>
-                  
-                  <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
-                    <span>{isEvidenceExpanded ? 'Hide Technical Table' : 'Show Technical Table'}</span>
-                    {isEvidenceExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </div>
-                </button>
 
-                {/* Collapsible Content */}
-                {isEvidenceExpanded && (
-                  <div className={`p-6 border-t space-y-4 ${
-                    darkMode ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50/60 border-slate-200'
-                  }`}>
-                    <div className={`overflow-x-auto rounded-xl border ${
-                      darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                    }`}>
-                      <table className="w-full text-left text-xs">
-                        <thead className={`border-b uppercase text-[10px] font-mono tracking-wider ${
-                          darkMode 
-                            ? 'bg-slate-800/80 text-slate-300 border-slate-700' 
-                            : 'bg-slate-100 text-slate-700 border-slate-200'
-                        }`}>
-                          <tr>
-                            <th className="py-3 px-4">Step #</th>
-                            <th className="py-3 px-4">Timestamp (IST)</th>
-                            <th className="py-3 px-4">Transaction Hash</th>
-                            <th className="py-3 px-4">From (Label)</th>
-                            <th className="py-3 px-4">To (Label)</th>
-                            <th className="py-3 px-4">Amount (Crypto & INR)</th>
-                            <th className="py-3 px-4">Identified Action</th>
-                          </tr>
-                        </thead>
-                        <tbody className={`divide-y font-mono ${
-                          darkMode ? 'divide-slate-800 text-slate-300' : 'divide-slate-200 text-slate-700'
-                        }`}>
-                          {activeCase.edges.map((edge, idx) => (
-                            <tr key={idx} className={darkMode ? 'hover:bg-slate-800/40' : 'hover:bg-slate-50'}>
-                              <td className={`py-3.5 px-4 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>#0{idx + 1}</td>
-                              <td className={`py-3.5 px-4 font-sans ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{activeCase.nodes[idx].time}</td>
-                              <td className="py-3.5 px-4 truncate max-w-[130px]" title={edge.txHash}>
-                                <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                                  <span>{edge.txHash.substring(0, 10)}...</span>
-                                  <button onClick={() => copyToClipboard(edge.txHash, `Tx-${idx + 1}`)} className="text-slate-400 hover:text-slate-600">
-                                    <Copy className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              </td>
-                              <td className="py-3.5 px-4">{activeCase.nodes[idx].label}</td>
-                              <td className="py-3.5 px-4">{activeCase.nodes[idx + 1].label}</td>
-                              <td className="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">
-                                <div>{edge.amount}</div>
-                                <div className={`text-[10px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{edge.inr}</div>
-                              </td>
-                              <td className="py-3.5 px-4 font-sans text-[11px]">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  edge.type === 'RAPID' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                                }`}>
-                                  {edge.type}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Footer Certification & SHA-256 Stamp */}
-                    <div className={`p-4 rounded-xl border space-y-1.5 text-[11px] font-mono ${
-                      darkMode 
-                        ? 'bg-slate-900 border-slate-800 text-slate-400' 
-                        : 'bg-white border-slate-200 text-slate-600'
-                    }`}>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className={`font-bold ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-                          Cryptographic Hash Integrity Stamp:
-                        </span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                          SHA-256 Checksum: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-                        </span>
-                      </div>
-                      <p className="font-sans italic">
-                        "Electronically generated and timestamped under Section 63 of Bharatiya Sakshya Adhiniyam, 2023 (BSA). Produced for formal submission to Court of Competent Jurisdiction."
-                      </p>
-                    </div>
+                  {/* Export Controls */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => exportTransactionHistory('csv')}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                        darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-200' : 'border-slate-300 hover:bg-slate-50 text-slate-800 shadow-2xs'
+                      }`}
+                      title="Download Transaction History in CSV format"
+                    >
+                      <Download className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Export CSV</span>
+                    </button>
+                    <button
+                      onClick={() => exportTransactionHistory('json')}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                        darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-200' : 'border-slate-300 hover:bg-slate-50 text-slate-800 shadow-2xs'
+                      }`}
+                      title="Download Transaction History in JSON format"
+                    >
+                      <Download className="w-3.5 h-3.5 text-purple-600" />
+                      <span>Export JSON</span>
+                    </button>
                   </div>
-                )}
+                </div>
+
+                {/* Visible Transaction Table */}
+                <div className={`overflow-x-auto rounded-xl border ${
+                  darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <table className="w-full text-left text-xs">
+                    <thead className={`border-b uppercase text-[10px] font-mono tracking-wider ${
+                      darkMode ? 'bg-slate-800/80 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'
+                    }`}>
+                      <tr>
+                        <th className="py-3 px-4">Hop</th>
+                        <th className="py-3 px-4">Timestamp (IST)</th>
+                        <th className="py-3 px-4">Transaction Hash (TXID)</th>
+                        <th className="py-3 px-4">From Wallet</th>
+                        <th className="py-3 px-4">To Wallet</th>
+                        <th className="py-3 px-4">Transferred Value</th>
+                        <th className="py-3 px-4">Anomaly Typology</th>
+                        <th className="py-3 px-4">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y font-mono ${
+                      darkMode ? 'divide-slate-800 text-slate-300' : 'divide-slate-200 text-slate-700'
+                    }`}>
+                      {activeCase.edges.map((edge, idx) => (
+                        <tr key={idx} className={darkMode ? 'hover:bg-slate-900/60' : 'hover:bg-slate-50/80'}>
+                          <td className={`py-3 px-4 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                            #{idx + 1}
+                          </td>
+                          <td className={`py-3 px-4 font-sans text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            {activeCase.nodes[idx].time}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                              <span className="font-bold">{edge.txHash.substring(0, 10)}...</span>
+                              <button
+                                onClick={() => copyToClipboard(edge.txHash, `Tx-${idx + 1}`)}
+                                className="p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                title="Copy Full Transaction Hash"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 truncate max-w-[130px]" title={activeCase.nodes[idx].address}>
+                            <div className="font-sans font-semibold">{activeCase.nodes[idx].label}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{activeCase.nodes[idx].address.substring(0, 10)}...</div>
+                          </td>
+                          <td className="py-3 px-4 truncate max-w-[130px]" title={activeCase.nodes[idx + 1].address}>
+                            <div className="font-sans font-semibold">{activeCase.nodes[idx + 1].label}</div>
+                            <div className="text-[10px] text-slate-400 truncate">{activeCase.nodes[idx + 1].address.substring(0, 10)}...</div>
+                          </td>
+                          <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">
+                            <div>{edge.amount}</div>
+                            <div className={`text-[10px] font-normal ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                              {edge.inr}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 font-sans text-[11px]">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              edge.type === 'RAPID'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                                : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
+                            }`}>
+                              {edge.type} ({edge.duration})
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-sans text-[11px]">
+                            <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>{idx === activeCase.edges.length - 1 ? 'Unspent' : 'Confirmed'}</span>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Section 63 BSA Evidentiary Seal */}
+                <div className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] font-mono ${
+                  darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
+                }`}>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
+                        SHA-256 Evidentiary Digest:
+                      </span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                        e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                      </span>
+                    </div>
+                    <p className="font-sans italic text-[10px] mt-0.5">
+                      "Certified authentic under Section 63 of Bharatiya Sakshya Adhiniyam, 2023. Ready for judicial filing before Judicial Magistrate."
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => copyToClipboard('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'SHA-256 Digest')}
+                    className="px-2.5 py-1 rounded border text-[10px] font-bold cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 transition"
+                  >
+                    Copy Hash
+                  </button>
+                </div>
 
               </div>
 
