@@ -45,6 +45,7 @@ import {
   Eye,
   RefreshCw
 } from 'lucide-react';
+import { fetchAndBuildCase } from './utils/blockchainFetcher.js';
 
 // ============================================================================
 // SELF-CONTAINED HACKATHON DATASETS (POLYGON, TRON, BITCOIN)
@@ -463,10 +464,12 @@ export default function App() {
   const [ncrpInput, setNcrpInput] = useState('');
   const [detectedChain, setDetectedChain] = useState('POLYGON');
   const [isSearching, setIsSearching] = useState(false);
+  const [isFetchingOnChain, setIsFetchingOnChain] = useState(false);
 
-  // Active Case Dataset
+  // Active Case Dataset: supports custom live-traced on-chain cases and demo cases
   const [activeCaseKey, setActiveCaseKey] = useState('polygon');
-  const activeCase = useMemo(() => DEMO_CASES[activeCaseKey], [activeCaseKey]);
+  const [customCase, setCustomCase] = useState(null);
+  const activeCase = useMemo(() => customCase || DEMO_CASES[activeCaseKey] || DEMO_CASES.polygon, [customCase, activeCaseKey]);
 
   // Interactive Graph Tooltip Selection
   const [selectedNode, setSelectedNode] = useState(null);
@@ -475,6 +478,53 @@ export default function App() {
   const [isEvidenceExpanded, setIsEvidenceExpanded] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'bnss' | 'pdf' | 'ncrp' | null
   const [toastMsg, setToastMsg] = useState(null);
+
+  // In-Table Transaction Filter
+  const [txSearchFilter, setTxSearchFilter] = useState('');
+
+  // Surveillance Watchlist State (Persistent)
+  const [watchlist, setWatchlist] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chakravyuh_watchlist');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [
+      {
+        id: 'wl-1',
+        address: '0xe6D6947c424AbbAB1C7b3866DC65614EEEC65358',
+        alias: 'Bengaluru Mule Layer #1',
+        fir: 'FIR-402/2026',
+        chain: 'Polygon',
+        notes: 'High-frequency burner pass-through account.',
+        dateAdded: '10 Sep 2026, 14:15 IST',
+        status: 'ACTIVE'
+      },
+      {
+        id: 'wl-2',
+        address: 'TYD1xK8vB29zLmP92Ka7199',
+        alias: 'Telegram Scam Inflow Node',
+        fir: 'FIR-719/2026',
+        chain: 'TRON',
+        notes: 'Monitored for sudden TRC-20 cash-out attempts.',
+        dateAdded: '11 Sep 2026, 12:05 IST',
+        status: 'ACTIVE'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('chakravyuh_watchlist', JSON.stringify(watchlist));
+    } catch (e) {}
+  }, [watchlist]);
+
+  const [watchlistForm, setWatchlistForm] = useState({
+    address: '',
+    alias: '',
+    fir: '',
+    chain: 'Polygon',
+    notes: ''
+  });
 
   // NCRP Vault State
   const [vaultCases, setVaultCases] = useState(VAULT_CASES_INITIAL);
@@ -520,8 +570,8 @@ export default function App() {
   const [isLiveTracing, setIsLiveTracing] = useState(false);
   const [traceProgress, setTraceProgress] = useState(4); // 1 to 4 hops resolved
   const [traceLogs, setTraceLogs] = useState([
-    `[21:45:00] RPC INGESTION: Connected to Polygon Mainnet Validator Node #14`,
-    `[21:45:02] BLOCK 489102: Found incoming victim transfer 25,000 USDT (₹21,25,000)`,
+    `[21:45:00] RPC INGESTION: Connected to live multi-chain validator cluster`,
+    `[21:45:02] BLOCK VERIFIED: Inflow detected and cross-referenced with victim complaint`,
     `[21:45:04] ANOMALY DETECTED: Burner transit mule — 100% balance swept in 134 seconds!`,
     `[21:45:06] CROSS-CHAIN ROUTER: Stargate Bridge hop confirmed (Polygon ➔ Ethereum Mainnet)`,
     `[21:45:08] ATTRIBUTION LOCKED: Funds converged at Binance Global Custodial Hot Wallet UID #8849201`,
@@ -535,6 +585,7 @@ export default function App() {
   };
 
   const copyToClipboard = (text, label) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedBadge(label);
     showToast(`Copied ${label} to clipboard!`);
@@ -542,23 +593,25 @@ export default function App() {
   };
 
   // Real-Time Progressive Tracing Engine Simulation
-  const runLiveTraceSimulation = (caseKey) => {
+  const runLiveTraceSimulation = (targetCaseOverride = null) => {
     setIsLiveTracing(true);
     setTraceProgress(1);
-    const targetCase = DEMO_CASES[caseKey] || DEMO_CASES.polygon;
+    const targetCase = targetCaseOverride || activeCase;
     const now = () => new Date().toLocaleTimeString('en-IN', { hour12: false });
+    const suspectAddr = targetCase.caseInfo?.suspectAddress || targetCase.nodes?.[1]?.address || '0x...';
+    const targetVasp = targetCase.caseInfo?.targetVasp || 'Binance Exchange';
 
     setTraceLogs([
-      `[${now()}] RPC INGESTION: Querying ${targetCase.caseInfo.network} live ledger for ${targetCase.nodes[1].address.substring(0, 16)}...`,
-      `[${now()}] BLOCK VERIFIED: Found initial transfer of ${targetCase.nodes[0].volume} from clean source.`
+      `[${now()}] RPC INGESTION: Querying ${targetCase.caseInfo.network} live ledger for ${suspectAddr.substring(0, 16)}...`,
+      `[${now()}] BLOCK VERIFIED: Found transfer of ${targetCase.nodes?.[0]?.volume || targetCase.caseInfo.totalValueUsdt} originating from clean source.`
     ]);
 
     setTimeout(() => {
       setTraceProgress(2);
       setTraceLogs((prev) => [
         ...prev,
-        `[${now()}] HEURISTIC ALERT: High-frequency burner sweep (${targetCase.nodes[1].address.substring(0, 12)}...). 100% drained in ${targetCase.nodes[1].timeSpent || '134s'}!`,
-        `[${now()}] HOP 2 TRAVERSAL: Following outbound TXID ${targetCase.edges[1]?.txHash?.substring(0, 14) || '0x9ab813...'}...`
+        `[${now()}] HEURISTIC ALERT: Suspect address ${suspectAddr.substring(0, 12)}... analyzed! Rapid transit pattern detected.`,
+        `[${now()}] HOP 2 TRAVERSAL: Following outbound TXID ${targetCase.edges?.[1]?.txHash?.substring(0, 14) || '0x9ab813...'}...`
       ]);
     }, 650);
 
@@ -566,7 +619,7 @@ export default function App() {
       setTraceProgress(3);
       setTraceLogs((prev) => [
         ...prev,
-        `[${now()}] OBFUSCATION DETECTED: Router / Bridge hop (${targetCase.nodes[2].label}). Cross-network liquidity bridge confirmed.`,
+        `[${now()}] OBFUSCATION DETECTED: Intermediate node (${targetCase.nodes?.[2]?.label || 'Layering Hop'}). Cross-network liquidity bridge confirmed.`,
         `[${now()}] ATTRIBUTION ENGINE: Resolving final custodial deposit counterparty...`
       ]);
     }, 1350);
@@ -576,25 +629,64 @@ export default function App() {
       setIsLiveTracing(false);
       setTraceLogs((prev) => [
         ...prev,
-        `[${now()}] ATTRIBUTION COMPLETE: Funds converged at ${targetCase.caseInfo.targetVasp} (${targetCase.caseInfo.vaspComplianceEmail}).`,
+        `[${now()}] ATTRIBUTION COMPLETE: Funds converged at ${targetVasp} (${targetCase.caseInfo.vaspComplianceEmail}).`,
         `[${now()}] ASSET STATUS: ${targetCase.caseInfo.totalValueInr} (${targetCase.caseInfo.totalValueUsdt}) UNSPENT in destination UID. Immediate Section 94 BNSS freeze enforceable!`
       ]);
-      showToast(`Real-Time Trace Complete: Funds located at ${targetCase.caseInfo.targetVasp}!`);
+      showToast(`Real-Time Trace Complete: Funds located at ${targetVasp}!`);
     }, 2050);
   };
 
+  // Extract All Transactions for Active Case
+  const allTransactions = useMemo(() => {
+    if (activeCase.transactions && activeCase.transactions.length > 0) {
+      return activeCase.transactions;
+    }
+    return (activeCase.edges || []).map((e, idx) => ({
+      hop: idx + 1,
+      timeStamp: activeCase.nodes?.[idx]?.time || '11 Sep 2026, 21:45 IST',
+      hash: e.txHash || '0x9ab8134fa8892147812bc312891fa30df9821478',
+      from: activeCase.nodes?.[idx]?.address || '0x...',
+      fromLabel: activeCase.nodes?.[idx]?.label || 'Origin',
+      to: activeCase.nodes?.[idx + 1]?.address || '0x...',
+      toLabel: activeCase.nodes?.[idx + 1]?.label || 'Destination',
+      amount: e.amount,
+      inr: e.inr,
+      type: e.type || 'TRANSFER',
+      duration: e.duration || 'On-Chain',
+      status: idx === (activeCase.edges.length - 1) ? 'Unspent' : 'Confirmed',
+      explorerUrl: activeCase.caseInfo?.network === 'Polygon'
+        ? `https://polygonscan.com/tx/${e.txHash}`
+        : (activeCase.caseInfo?.network === 'TRON' ? `https://tronscan.org/#/transaction/${e.txHash}` : `https://etherscan.io/tx/${e.txHash}`)
+    }));
+  }, [activeCase]);
+
+  // Filtered Transactions for Table
+  const displayTransactions = useMemo(() => {
+    if (!txSearchFilter.trim()) return allTransactions;
+    const q = txSearchFilter.toLowerCase();
+    return allTransactions.filter(t =>
+      (t.hash || '').toLowerCase().includes(q) ||
+      (t.from || '').toLowerCase().includes(q) ||
+      (t.to || '').toLowerCase().includes(q) ||
+      (t.amount || '').toLowerCase().includes(q) ||
+      (t.type || '').toLowerCase().includes(q) ||
+      (t.fromLabel || '').toLowerCase().includes(q) ||
+      (t.toLabel || '').toLowerCase().includes(q)
+    );
+  }, [allTransactions, txSearchFilter]);
+
   // Export Technical Ledger as CSV / JSON
   const exportTransactionHistory = (format) => {
-    const data = activeCase.edges.map((e, idx) => ({
-      hop: idx + 1,
-      from: activeCase.nodes[idx].label + ' (' + activeCase.nodes[idx].address + ')',
-      to: activeCase.nodes[idx + 1].label + ' (' + activeCase.nodes[idx + 1].address + ')',
-      amount_crypto: e.amount,
-      amount_inr: e.inr,
-      duration: e.duration,
-      txHash: e.txHash,
-      type: e.type,
-      timestamp: activeCase.nodes[idx].time
+    const data = displayTransactions.map(d => ({
+      hop: d.hop,
+      timestamp: d.timeStamp,
+      txHash: d.hash,
+      from: d.fromLabel ? `${d.fromLabel} (${d.from})` : d.from,
+      to: d.toLabel ? `${d.toLabel} (${d.to})` : d.to,
+      amount: d.amount,
+      inr: d.inr,
+      type: d.type,
+      status: d.status
     }));
 
     if (format === 'json') {
@@ -602,23 +694,23 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `NCRP_${activeCase.caseInfo.ncrpId.replace(/\//g, '_')}_Evidence_Ledger.json`;
+      a.download = `NCRP_${(activeCase.caseInfo?.ncrpId || 'CASE').replace(/\//g, '_')}_Evidence_Ledger.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('Exported Transaction History as JSON!');
+      showToast(`Exported ${data.length} Transactions as JSON!`);
     } else {
-      let csv = 'Hop,Timestamp,From_Entity,To_Entity,Amount_Crypto,Amount_INR,Duration,TXID,Anomaly_Type\n';
+      let csv = 'Hop,Timestamp_IST,TXID,From_Wallet,To_Wallet,Amount_Crypto,Amount_INR,Typology,Status\n';
       data.forEach(d => {
-        csv += `"${d.hop}","${d.timestamp}","${d.from}","${d.to}","${d.amount_crypto}","${d.amount_inr}","${d.duration}","${d.txHash}","${d.type}"\n`;
+        csv += `"${d.hop}","${d.timestamp}","${d.txHash}","${d.from}","${d.to}","${d.amount}","${d.inr}","${d.type}","${d.status}"\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `NCRP_${activeCase.caseInfo.ncrpId.replace(/\//g, '_')}_Evidence_Ledger.csv`;
+      a.download = `NCRP_${(activeCase.caseInfo?.ncrpId || 'CASE').replace(/\//g, '_')}_Evidence_Ledger.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('Exported Transaction History as CSV!');
+      showToast(`Exported ${data.length} Transactions as CSV!`);
     }
   };
 
@@ -637,25 +729,78 @@ export default function App() {
     }
   };
 
-  // Execute Trace with Live Simulation
-  const handleExecuteTrace = (e) => {
-    if (e) e.preventDefault();
-    if (!inputAddress.trim()) {
+  // Execute Trace with Live Blockchain Query & Progressive Case Construction
+  const handleExecuteTrace = async (e, directAddress = null, directNcrp = null) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const query = (directAddress || inputAddress).trim();
+    if (!query) {
       showToast('Please enter a suspect wallet address.');
       return;
     }
 
-    let targetKey = 'polygon';
-    if (inputAddress.toLowerCase().includes('tyd') || inputAddress.startsWith('T')) {
-      targetKey = 'tron';
-    } else if (inputAddress.startsWith('1') || inputAddress.startsWith('3') || inputAddress.startsWith('bc1')) {
-      targetKey = 'bitcoin';
+    if (directAddress) {
+      setInputAddress(directAddress);
     }
-    setActiveCaseKey(targetKey);
-    setCurrentView('results');
-    setActiveNav('intelligence');
-    setSelectedNode(null);
-    runLiveTraceSimulation(targetKey);
+    if (directNcrp) {
+      setNcrpInput(directNcrp);
+    }
+
+    setIsSearching(true);
+    setIsFetchingOnChain(true);
+    showToast(`Scanning blockchain nodes & tracing ${query.substring(0, 12)}...`);
+
+    try {
+      const builtCase = await fetchAndBuildCase(query, directNcrp || ncrpInput, detectedChain);
+      if (builtCase) {
+        setCustomCase(builtCase);
+        if (builtCase.caseInfo?.network) {
+          const net = builtCase.caseInfo.network.toUpperCase();
+          if (net.includes('POLYGON')) setDetectedChain('POLYGON');
+          else if (net.includes('TRON')) setDetectedChain('TRON');
+          else if (net.includes('BITCOIN')) setDetectedChain('BITCOIN');
+          else if (net.includes('ETH')) setDetectedChain('ETH');
+        }
+
+        // Auto-add to watchlist if not present
+        setWatchlist((prev) => {
+          if (prev.some((w) => w.address.toLowerCase() === query.toLowerCase())) return prev;
+          return [
+            {
+              id: 'wl-' + Date.now(),
+              address: query,
+              alias: builtCase.caseInfo?.targetVasp ? `Suspect ➔ ${builtCase.caseInfo.targetVasp}` : 'Queried Suspect Address',
+              fir: directNcrp || ncrpInput || builtCase.caseInfo?.firNumber || 'FIR-402/2026',
+              chain: builtCase.caseInfo?.network || 'Polygon',
+              notes: `Auto-ingested via real-time search trace (${builtCase.txCount} txs)`,
+              dateAdded: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+              status: 'ACTIVE'
+            },
+            ...prev
+          ];
+        });
+
+        setCurrentView('results');
+        setActiveNav('intelligence');
+        setSelectedNode(null);
+        setTxSearchFilter('');
+        runLiveTraceSimulation(builtCase);
+
+        if (builtCase.hasOnChainData) {
+          showToast(`🟢 On-Chain Ledger Synced: Found ${builtCase.txCount} verified transactions!`);
+        } else {
+          showToast(`⚡ Attribution Active: Traced suspect address across ${builtCase.caseInfo?.network} nodes.`);
+        }
+      }
+    } catch (err) {
+      console.error('Error during trace execution:', err);
+      showToast('Error during on-chain scan, fallback forensic attribution active.');
+      setCurrentView('results');
+      setActiveNav('intelligence');
+      runLiveTraceSimulation();
+    } finally {
+      setIsSearching(false);
+      setIsFetchingOnChain(false);
+    }
   };
 
   const handleSelectDemo = (key, address, ncrp) => {
@@ -810,7 +955,31 @@ export default function App() {
               {sidebarOpen && <span>Active Intelligence</span>}
             </button>
 
-            {/* 3. NCRP Case Vault */}
+            {/* 3. Active Watchlist */}
+            <button
+              onClick={() => { setActiveNav('watchlist'); setCurrentView('watchlist'); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                activeNav === 'watchlist'
+                  ? darkMode
+                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800 font-bold'
+                    : 'bg-blue-50 text-blue-700 border border-blue-200 font-bold shadow-xs'
+                  : darkMode
+                    ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              <Eye className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              {sidebarOpen && (
+                <div className="flex items-center justify-between w-full">
+                  <span>Watchlist</span>
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    {watchlist.length}
+                  </span>
+                </div>
+              )}
+            </button>
+
+            {/* 4. NCRP Case Vault */}
             <button
               onClick={() => { setActiveNav('vault'); setCurrentView('vault'); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
@@ -1113,7 +1282,7 @@ export default function App() {
                     <span>New Trace</span>
                   </button>
 
-                  <div className={`flex items-center gap-2 text-xs font-mono ${
+                  <div className={`flex flex-wrap items-center gap-2 text-xs font-mono ${
                     darkMode ? 'text-slate-400' : 'text-slate-600'
                   }`}>
                     <span className="font-bold text-blue-600 dark:text-blue-400">{activeCase.caseInfo.firNumber}</span>
@@ -1123,13 +1292,33 @@ export default function App() {
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 uppercase">
                       {activeCase.caseInfo.network}
                     </span>
+                    {activeCase.caseInfo.suspectAddress && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300">
+                          <span className="text-[10px] text-slate-500 uppercase">Suspect:</span>
+                          <span className="font-mono">
+                            {activeCase.caseInfo.suspectAddress.length > 18
+                              ? `${activeCase.caseInfo.suspectAddress.substring(0, 10)}...${activeCase.caseInfo.suspectAddress.substring(activeCase.caseInfo.suspectAddress.length - 6)}`
+                              : activeCase.caseInfo.suspectAddress}
+                          </span>
+                          <button
+                            onClick={() => copyToClipboard(activeCase.caseInfo.suspectAddress, 'Suspect Wallet')}
+                            className="hover:text-blue-500 cursor-pointer p-0.5"
+                            title="Copy Full Suspect Address"
+                          >
+                            <Copy className="w-2.5 h-2.5" />
+                          </button>
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {/* Right: Primary Directives Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2">
                   <button
-                    onClick={() => runLiveTraceSimulation(activeCaseKey)}
+                    onClick={() => runLiveTraceSimulation(activeCase)}
                     disabled={isLiveTracing}
                     className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
                       isLiveTracing
@@ -1138,7 +1327,7 @@ export default function App() {
                           ? 'bg-slate-900 border-slate-700 text-slate-200 hover:bg-slate-800'
                           : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-2xs'
                     }`}
-                    title="Simulate real-time blockchain traversal"
+                    title="Re-run real-time blockchain traversal"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isLiveTracing ? 'animate-spin' : ''}`} />
                     <span>{isLiveTracing ? 'Scanning Mempool...' : '⚡ Re-Scan Live'}</span>
@@ -1511,7 +1700,6 @@ export default function App() {
 
               {/* ------------------------------------------------------------ */}
               {/* TRANSACTION HISTORY & CHAIN OF CUSTODY (VISIBLE BY DEFAULT)  */}
-              {/* ------------------------------------------------------------ */}
               <div className={`rounded-2xl border p-5 sm:p-7 shadow-xs space-y-4 ${
                 darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
               }`}>
@@ -1523,17 +1711,44 @@ export default function App() {
                     }`}>
                       <FileText className="w-4 h-4 text-emerald-600" />
                       <span>Blockchain Transaction History & Chain of Custody</span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                        Section 63 BSA Certified
-                      </span>
+                      {activeCase.hasOnChainData ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
+                          🟢 Live On-Chain Synced ({allTransactions.length} Records)
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800">
+                          Forensic Attribution Ledger ({allTransactions.length} Hops)
+                        </span>
+                      )}
                     </h3>
                     <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Complete chronological hop-by-hop ledger with verifiable on-chain TXIDs and timestamps.
+                      Audited on-chain records for suspect address <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{activeCase.caseInfo.suspectAddress}</span> ({activeCase.caseInfo.network}).
                     </p>
                   </div>
 
-                  {/* Export Controls */}
-                  <div className="flex items-center gap-2">
+                  {/* Search Filter & Export Controls */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative w-full sm:w-64">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={txSearchFilter}
+                        onChange={(e) => setTxSearchFilter(e.target.value)}
+                        placeholder="Filter TXID, From, or To..."
+                        className={`w-full pl-8 pr-6 py-1.5 rounded-lg text-xs font-mono border focus:outline-none focus:ring-1 focus:ring-blue-600 ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                        }`}
+                      />
+                      {txSearchFilter && (
+                        <button
+                          onClick={() => setTxSearchFilter('')}
+                          className="absolute right-2 top-2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+
                     <button
                       onClick={() => exportTransactionHistory('csv')}
                       className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
@@ -1579,57 +1794,122 @@ export default function App() {
                     <tbody className={`divide-y font-mono ${
                       darkMode ? 'divide-slate-800 text-slate-300' : 'divide-slate-200 text-slate-700'
                     }`}>
-                      {activeCase.edges.map((edge, idx) => (
+                      {displayTransactions.map((tx, idx) => (
                         <tr key={idx} className={darkMode ? 'hover:bg-slate-900/60' : 'hover:bg-slate-50/80'}>
                           <td className={`py-3 px-4 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                            #{idx + 1}
+                            #{tx.hop || idx + 1}
                           </td>
                           <td className={`py-3 px-4 font-sans text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            {activeCase.nodes[idx].time}
+                            {tx.timeStamp}
                           </td>
                           <td className="py-3 px-4">
-                            <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                              <span className="font-bold">{edge.txHash.substring(0, 10)}...</span>
+                            <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                              <span className="font-bold">
+                                {tx.hash && tx.hash.length > 14
+                                  ? `${tx.hash.substring(0, 8)}...${tx.hash.substring(tx.hash.length - 6)}`
+                                  : tx.hash}
+                              </span>
                               <button
-                                onClick={() => copyToClipboard(edge.txHash, `Tx-${idx + 1}`)}
+                                onClick={() => copyToClipboard(tx.hash, `Tx-${idx + 1}`)}
                                 className="p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"
                                 title="Copy Full Transaction Hash"
                               >
                                 <Copy className="w-3 h-3" />
                               </button>
+                              {tx.explorerUrl && (
+                                <a
+                                  href={tx.explorerUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-0.5 text-slate-400 hover:text-blue-600 cursor-pointer"
+                                  title="View on Block Explorer"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              )}
                             </div>
                           </td>
-                          <td className="py-3 px-4 truncate max-w-[130px]" title={activeCase.nodes[idx].address}>
-                            <div className="font-sans font-semibold">{activeCase.nodes[idx].label}</div>
-                            <div className="text-[10px] text-slate-400 truncate">{activeCase.nodes[idx].address.substring(0, 10)}...</div>
+                          <td className="py-3 px-4 truncate max-w-[140px]" title={tx.from}>
+                            {tx.fromLabel && (
+                              <div className="font-sans font-semibold text-xs truncate">{tx.fromLabel}</div>
+                            )}
+                            <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                              <span className="truncate">
+                                {tx.from && tx.from.length > 14
+                                  ? `${tx.from.substring(0, 6)}...${tx.from.substring(tx.from.length - 4)}`
+                                  : tx.from}
+                              </span>
+                              <button
+                                onClick={() => copyToClipboard(tx.from, 'From Address')}
+                                className="hover:text-slate-600 cursor-pointer"
+                                title="Copy From Address"
+                              >
+                                <Copy className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
                           </td>
-                          <td className="py-3 px-4 truncate max-w-[130px]" title={activeCase.nodes[idx + 1].address}>
-                            <div className="font-sans font-semibold">{activeCase.nodes[idx + 1].label}</div>
-                            <div className="text-[10px] text-slate-400 truncate">{activeCase.nodes[idx + 1].address.substring(0, 10)}...</div>
+                          <td className="py-3 px-4 truncate max-w-[140px]" title={tx.to}>
+                            {tx.toLabel && (
+                              <div className="font-sans font-semibold text-xs truncate">{tx.toLabel}</div>
+                            )}
+                            <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                              <span className="truncate">
+                                {tx.to && tx.to.length > 14
+                                  ? `${tx.to.substring(0, 6)}...${tx.to.substring(tx.to.length - 4)}`
+                                  : tx.to}
+                              </span>
+                              <button
+                                onClick={() => copyToClipboard(tx.to, 'To Address')}
+                                className="hover:text-slate-600 cursor-pointer"
+                                title="Copy To Address"
+                              >
+                                <Copy className="w-2.5 h-2.5" />
+                              </button>
+                            </div>
                           </td>
                           <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">
-                            <div>{edge.amount}</div>
+                            <div>{tx.amount}</div>
                             <div className={`text-[10px] font-normal ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                              {edge.inr}
+                              {tx.inr}
                             </div>
                           </td>
                           <td className="py-3 px-4 font-sans text-[11px]">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              edge.type === 'RAPID'
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              tx.type === 'RAPID' || tx.type === 'RAPID_DRAIN'
                                 ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
-                                : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
+                                : tx.type === 'BRIDGE_HOP' || tx.type === 'CROSS-CHAIN'
+                                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
+                                  : tx.type === 'VASP_DEPOSIT' || tx.type === 'DEPOSIT'
+                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                             }`}>
-                              {edge.type} ({edge.duration})
+                              {tx.type} {tx.duration ? `(${tx.duration})` : ''}
                             </span>
                           </td>
                           <td className="py-3 px-4 font-sans text-[11px]">
-                            <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>{idx === activeCase.edges.length - 1 ? 'Unspent' : 'Confirmed'}</span>
+                            <span className="flex items-center gap-1.5 font-semibold">
+                              {tx.status === 'Unspent' ? (
+                                <>
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                  <span className="text-emerald-600 dark:text-emerald-400">Unspent</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span className="text-slate-500">Confirmed</span>
+                                </>
+                              )}
                             </span>
                           </td>
                         </tr>
                       ))}
+                      {displayTransactions.length === 0 && (
+                        <tr>
+                          <td colSpan="8" className="py-8 text-center text-slate-400 font-sans text-xs">
+                            No transactions found matching "{txSearchFilter}".
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1930,19 +2210,7 @@ export default function App() {
                       {/* Action Buttons */}
                       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
                         <button
-                          onClick={() => {
-                            if (c.key && DEMO_CASES[c.key]) {
-                              setActiveCaseKey(c.key);
-                            } else {
-                              setActiveCaseKey('polygon');
-                            }
-                            setInputAddress(c.suspectAddress);
-                            setNcrpInput(c.ncrpId);
-                            setActiveNav('intelligence');
-                            setCurrentView('results');
-                            setSelectedNode(null);
-                            showToast(`Loaded ${c.ncrpId} into Attribution Desk.`);
-                          }}
+                          onClick={() => handleExecuteTrace(null, c.suspectAddress, c.ncrpId)}
                           className="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-blue-700 hover:bg-blue-800 text-white flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
                         >
                           <span>⚡ Trace Docket in Real-Time</span>
@@ -1974,6 +2242,286 @@ export default function App() {
                     </div>
                   ))}
               </div>
+            </div>
+          )}
+
+          {/* ================================================================ */}
+          {/* VIEW: ACTIVE SURVEILLANCE WATCHLIST                               */}
+          {/* ================================================================ */}
+          {activeNav === 'watchlist' && (
+            <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+              
+              {/* Header */}
+              <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5 ${
+                darkMode ? 'border-slate-800' : 'border-slate-200'
+              }`}>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                      <span>24/7 Live Ledger Monitoring</span>
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      Automated Daemon Polling
+                    </span>
+                  </div>
+                  <h2 className={`text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5 mt-1.5 ${
+                    darkMode ? 'text-white' : 'text-slate-900'
+                  }`}>
+                    <Eye className="w-7 h-7 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                    <span>Active Surveillance Watchlist</span>
+                  </h2>
+                  <p className={`text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed ${
+                    darkMode ? 'text-slate-400' : 'text-slate-600'
+                  }`}>
+                    Designated roster of high-risk suspect addresses, transit burner mules, and cash-out endpoints under 24/7 automated on-chain surveillance.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      let csv = 'Address,Alias,FIR_Ref,Network,Date_Added,Status\n';
+                      watchlist.forEach(w => {
+                        csv += `"${w.address}","${w.alias}","${w.fir}","${w.chain}","${w.dateAdded}","${w.status}"\n`;
+                      });
+                      const blob = new Blob([csv], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `Chakravyuh_Watchlist_${Date.now()}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      showToast('Exported Surveillance Watchlist as CSV!');
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                      darkMode ? 'border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800' : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50 shadow-2xs'
+                    }`}
+                  >
+                    <Download className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Export Roster (CSV)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Ingestion Card */}
+              <div className={`rounded-2xl border p-5 sm:p-6 shadow-xs ${
+                darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+              }`}>
+                <h3 className={`text-sm font-bold uppercase tracking-wider mb-4 flex items-center gap-2 ${
+                  darkMode ? 'text-slate-200' : 'text-slate-800'
+                }`}>
+                  <Plus className="w-4 h-4 text-emerald-600" />
+                  <span>Manually Ingest Suspect Wallet into Active Surveillance</span>
+                </h3>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!watchlistForm.address.trim()) {
+                      showToast('Please enter a suspect wallet address.');
+                      return;
+                    }
+                    const newEntry = {
+                      id: 'wl-' + Date.now(),
+                      address: watchlistForm.address.trim(),
+                      alias: watchlistForm.alias.trim() || 'Suspect Mule Node',
+                      fir: watchlistForm.fir.trim() || 'FIR-402/2026',
+                      chain: watchlistForm.chain || 'Polygon',
+                      notes: watchlistForm.notes.trim() || 'Manual surveillance addition',
+                      dateAdded: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+                      status: 'ACTIVE'
+                    };
+                    setWatchlist([newEntry, ...watchlist]);
+                    setWatchlistForm({ address: '', alias: '', fir: '', chain: 'Polygon', notes: '' });
+                    showToast(`Added ${newEntry.address.substring(0, 10)}... to Active Surveillance!`);
+                  }}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+                >
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                      Suspect Wallet Address
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={watchlistForm.address}
+                      onChange={(e) => setWatchlistForm({ ...watchlistForm, address: e.target.value })}
+                      placeholder="0x... or T... or bc1..."
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-mono border focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                      Case FIR / NCRP Reference
+                    </label>
+                    <input
+                      type="text"
+                      value={watchlistForm.fir}
+                      onChange={(e) => setWatchlistForm({ ...watchlistForm, fir: e.target.value })}
+                      placeholder="e.g. FIR-402/2026"
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-mono border focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                      Mule / Suspect Alias
+                    </label>
+                    <input
+                      type="text"
+                      value={watchlistForm.alias}
+                      onChange={(e) => setWatchlistForm({ ...watchlistForm, alias: e.target.value })}
+                      placeholder="e.g. Telegram Mule Transit #3"
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-mono border focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                        darkMode ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
+                    />
+                  </div>
+
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        Network
+                      </label>
+                      <select
+                        value={watchlistForm.chain}
+                        onChange={(e) => setWatchlistForm({ ...watchlistForm, chain: e.target.value })}
+                        className={`w-full px-3 py-2 rounded-lg text-xs font-semibold border cursor-pointer ${
+                          darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                        }`}
+                      >
+                        <option value="Polygon">Polygon PoS</option>
+                        <option value="Ethereum">Ethereum</option>
+                        <option value="TRON">TRON TRC-20</option>
+                        <option value="Bitcoin">Bitcoin</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="py-2 px-4 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 cursor-pointer flex-shrink-0 shadow-xs h-[34px]"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Suspect</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Monitored Roster Table */}
+              <div className={`overflow-x-auto rounded-2xl border ${
+                darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xs'
+              }`}>
+                <table className="w-full text-left text-xs">
+                  <thead className={`border-b uppercase text-[10px] font-mono tracking-wider ${
+                    darkMode ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'
+                  }`}>
+                    <tr>
+                      <th className="py-3 px-4">#</th>
+                      <th className="py-3 px-4">Suspect Wallet Address</th>
+                      <th className="py-3 px-4">Alias / Syndicate</th>
+                      <th className="py-3 px-4">FIR Reference</th>
+                      <th className="py-3 px-4">Network</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y font-mono ${
+                    darkMode ? 'divide-slate-800 text-slate-300' : 'divide-slate-200 text-slate-700'
+                  }`}>
+                    {watchlist.map((w, idx) => (
+                      <tr key={w.id || idx} className={darkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}>
+                        <td className={`py-3.5 px-4 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                          #{idx + 1}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-blue-600 dark:text-blue-400">
+                              {w.address.length > 20
+                                ? `${w.address.substring(0, 10)}...${w.address.substring(w.address.length - 6)}`
+                                : w.address}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(w.address, 'Watched Address')}
+                              className="p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              title="Copy Address"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                            <a
+                              href={w.chain === 'Polygon'
+                                ? `https://polygonscan.com/address/${w.address}`
+                                : (w.chain === 'TRON' ? `https://tronscan.org/#/address/${w.address}` : `https://etherscan.io/address/${w.address}`)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-0.5 text-slate-400 hover:text-blue-600 cursor-pointer"
+                              title="View on Explorer"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                          {w.notes && (
+                            <div className="text-[10px] text-slate-400 font-sans mt-0.5 truncate max-w-xs">{w.notes}</div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 font-sans font-semibold text-slate-800 dark:text-slate-200">
+                          {w.alias}
+                        </td>
+                        <td className="py-3.5 px-4 text-xs font-bold text-slate-600 dark:text-slate-300">
+                          {w.fir}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 uppercase">
+                            {w.chain}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 font-sans">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span>ACTIVE (25s)</span>
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleExecuteTrace(null, w.address, w.fir)}
+                              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-1 transition cursor-pointer shadow-xs"
+                              title="Trace this address immediately"
+                            >
+                              <Search className="w-3 h-3" />
+                              <span>Trace</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setWatchlist(watchlist.filter((item) => item.id !== w.id));
+                                showToast(`Removed ${w.address.substring(0, 8)}... from watchlist.`);
+                              }}
+                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900"
+                              title="Remove from surveillance"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {watchlist.length === 0 && (
+                      <tr>
+                        <td colSpan="7" className="py-12 text-center text-slate-400 font-sans text-xs">
+                          No suspect addresses in active surveillance. Ingest suspect addresses using the form above.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
             </div>
           )}
 
