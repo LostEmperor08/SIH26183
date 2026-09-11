@@ -600,17 +600,19 @@ export default function App() {
     const now = () => new Date().toLocaleTimeString('en-IN', { hour12: false });
     const suspectAddr = targetCase.caseInfo?.suspectAddress || targetCase.nodes?.[1]?.address || '0x...';
     const targetVasp = targetCase.caseInfo?.targetVasp || 'Binance Exchange';
+    const isCustodial = targetCase.caseInfo?.isCustodialVasp !== false;
+    const dwellStr = targetCase.caseInfo?.dwellFormatted || '2m 14s';
 
     setTraceLogs([
       `[${now()}] RPC INGESTION: Querying ${targetCase.caseInfo.network} live ledger for ${suspectAddr.substring(0, 16)}...`,
-      `[${now()}] BLOCK VERIFIED: Found transfer of ${targetCase.nodes?.[0]?.volume || targetCase.caseInfo.totalValueUsdt} originating from clean source.`
+      `[${now()}] BLOCK VERIFIED: Inflow of ${targetCase.nodes?.[0]?.volume || targetCase.caseInfo.totalValueUsdt} confirmed from origin cluster.`
     ]);
 
     setTimeout(() => {
       setTraceProgress(2);
       setTraceLogs((prev) => [
         ...prev,
-        `[${now()}] HEURISTIC ALERT: Suspect address ${suspectAddr.substring(0, 12)}... analyzed! Rapid transit pattern detected.`,
+        `[${now()}] HEURISTIC ANALYSIS: Analyzed suspect address ${suspectAddr.substring(0, 12)}... (Dwell: ${dwellStr}).`,
         `[${now()}] HOP 2 TRAVERSAL: Following outbound TXID ${targetCase.edges?.[1]?.txHash?.substring(0, 14) || '0x9ab813...'}...`
       ]);
     }, 650);
@@ -619,8 +621,8 @@ export default function App() {
       setTraceProgress(3);
       setTraceLogs((prev) => [
         ...prev,
-        `[${now()}] OBFUSCATION DETECTED: Intermediate node (${targetCase.nodes?.[2]?.label || 'Layering Hop'}). Cross-network liquidity bridge confirmed.`,
-        `[${now()}] ATTRIBUTION ENGINE: Resolving final custodial deposit counterparty...`
+        `[${now()}] COUNTERPARTY RESOLUTION: Following outbound flow to ${targetCase.nodes?.[2]?.label || 'Downstream node'}...`,
+        `[${now()}] ATTRIBUTION ENGINE: Evaluating entity classification (Custodial VASP vs Non-Custodial EOA)...`
       ]);
     }, 1350);
 
@@ -629,10 +631,12 @@ export default function App() {
       setIsLiveTracing(false);
       setTraceLogs((prev) => [
         ...prev,
-        `[${now()}] ATTRIBUTION COMPLETE: Funds converged at ${targetVasp} (${targetCase.caseInfo.vaspComplianceEmail}).`,
-        `[${now()}] ASSET STATUS: ${targetCase.caseInfo.totalValueInr} (${targetCase.caseInfo.totalValueUsdt}) UNSPENT in destination UID. Immediate Section 94 BNSS freeze enforceable!`
+        `[${now()}] ATTRIBUTION COMPLETE: Destination identified as ${targetVasp}.`,
+        isCustodial
+          ? `[${now()}] ASSET STATUS: ${targetCase.caseInfo.totalValueInr} (${targetCase.caseInfo.totalValueUsdt}) UNSPENT in destination UID. Immediate Section 94 BNSS freeze enforceable!`
+          : `[${now()}] ASSET STATUS: ${targetCase.caseInfo.totalValueInr} held in Unhosted Private EOA. Section 94 VASP freeze blocked — initiate secondary-hop trace or upstream KYC subpoena.`
       ]);
-      showToast(`Real-Time Trace Complete: Funds located at ${targetVasp}!`);
+      showToast(isCustodial ? `Real-Time Trace Complete: Funds located at ${targetVasp}!` : `Trace Complete: Unhosted Private EOA Destination Identified.`);
     }, 2050);
   };
 
@@ -1410,13 +1414,13 @@ export default function App() {
                       <span>On-Chain Status</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                        Unspent in Hot Wallet
+                      <span className={`w-2 h-2 rounded-full ${activeCase.caseInfo.isCustodialVasp !== false ? 'bg-emerald-500 animate-ping' : 'bg-amber-500'}`}></span>
+                      <span className={`text-xs font-bold ${activeCase.caseInfo.isCustodialVasp !== false ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                        {activeCase.caseInfo.onChainStatusTitle || (activeCase.caseInfo.isCustodialVasp !== false ? 'Unspent in Hot Wallet' : 'Unhosted Private EOA')}
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-500">
-                      Immediate debit-freeze window active
+                    <div className="text-[11px] text-slate-500 truncate" title={activeCase.caseInfo.unspentStatus}>
+                      {activeCase.caseInfo.onChainStatusSub || (activeCase.caseInfo.isCustodialVasp !== false ? 'Immediate debit-freeze window active' : 'Non-custodial (Requires 2nd hop trace)')}
                     </div>
                   </div>
 
@@ -1425,11 +1429,23 @@ export default function App() {
                     <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                       Forensic Threat Score
                     </div>
-                    <div className="text-lg font-black font-mono text-red-600 dark:text-red-500">
+                    <div className={`text-lg font-black font-mono ${
+                      activeCase.caseInfo.riskScore > 75 
+                        ? 'text-red-600 dark:text-red-500' 
+                        : activeCase.caseInfo.riskScore > 40 
+                          ? 'text-amber-600 dark:text-amber-500' 
+                          : 'text-emerald-600 dark:text-emerald-500'
+                    }`}>
                       {activeCase.caseInfo.riskScore} <span className="text-xs text-slate-400">/ 100</span>
                     </div>
-                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300">
-                      Critical Scam Transit
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      activeCase.caseInfo.riskScore > 75
+                        ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300'
+                        : activeCase.caseInfo.riskScore > 40
+                          ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+                          : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                    }`}>
+                      {activeCase.caseInfo.riskLabel ? (activeCase.caseInfo.riskLabel.split(':')[0]) : (activeCase.caseInfo.riskScore > 75 ? 'Critical Scam Transit' : 'Standard Peer-to-Peer')}
                     </span>
                   </div>
 
@@ -1519,9 +1535,11 @@ export default function App() {
                     {activeCase.nodes.map((node, index) => {
                       const isVictim = node.type === 'VICTIM';
                       const isBurner = node.type === 'BURNER_MULE';
+                      const isSuspect = node.type === 'SUSPECT';
                       const isMixer = node.type === 'MIXER';
                       const isBridge = node.type === 'BRIDGE';
                       const isExchange = node.type === 'EXCHANGE';
+                      const isEoa = node.type === 'EOA_WALLET';
 
                       const edge = activeCase.edges[index];
                       const isUnlocked = !isLiveTracing || traceProgress >= (index + 1);
@@ -1543,17 +1561,23 @@ export default function App() {
                                 ? 'bg-blue-100 dark:bg-blue-950 border-blue-600 text-blue-700 dark:text-blue-300'
                                 : isBurner
                                 ? 'bg-red-100 dark:bg-red-950 border-red-500 text-red-600 dark:text-red-400 animate-pulse'
+                                : isSuspect
+                                ? 'bg-amber-100 dark:bg-amber-950 border-amber-500 text-amber-700 dark:text-amber-300'
                                 : isMixer
                                 ? 'bg-purple-100 dark:bg-purple-950 border-purple-600 text-purple-700 dark:text-purple-300'
                                 : isBridge
                                 ? 'bg-indigo-100 dark:bg-indigo-950 border-indigo-600 text-indigo-700 dark:text-indigo-300'
-                                : 'bg-emerald-100 dark:bg-emerald-950 border-emerald-600 text-emerald-700 dark:text-emerald-300 ring-4 ring-emerald-500/20'
+                                : isExchange
+                                ? 'bg-emerald-100 dark:bg-emerald-950 border-emerald-600 text-emerald-700 dark:text-emerald-300 ring-4 ring-emerald-500/20'
+                                : 'bg-slate-100 dark:bg-slate-850 border-slate-600 text-slate-700 dark:text-slate-300 ring-2 ring-slate-500/20'
                             }`}>
                               {isVictim && <User className="w-6 h-6" />}
                               {isBurner && <Flame className="w-6 h-6" />}
+                              {isSuspect && <ShieldAlert className="w-6 h-6" />}
                               {isMixer && <Shuffle className="w-6 h-6" />}
                               {isBridge && <GitFork className="w-6 h-6" />}
                               {isExchange && <Building2 className="w-6 h-6" />}
+                              {isEoa && <Lock className="w-6 h-6" />}
                             </div>
 
                             <div className="space-y-0.5">
@@ -1657,43 +1681,50 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 3 Core Investigative Insights (Always Visible) */}
+                {/* 3 Core Investigative Insights (Dynamic Forensic Attribution) */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-                  <div className={`p-3.5 rounded-xl border space-y-1 ${
-                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
-                  }`}>
-                    <div className="flex items-center gap-1.5 font-bold text-xs text-red-600 dark:text-red-400">
-                      <Flame className="w-3.5 h-3.5" />
-                      <span>Velocity Anomaly (186.5 USDT/sec)</span>
+                  {(activeCase.insightCards || [
+                    {
+                      icon: 'flame',
+                      title: 'Velocity Anomaly (186.5 USDT/sec)',
+                      desc: "Victim's funds were 100% drained in 134s. High-velocity automated laundering bot detected.",
+                      color: 'red'
+                    },
+                    {
+                      icon: 'gitfork',
+                      title: 'Cross-Chain Layering (Bridge Hop)',
+                      desc: 'Tokens hopped across chains via Stargate router to evade native Polygon mempool filters.',
+                      color: 'purple'
+                    },
+                    {
+                      icon: 'building',
+                      title: 'Custodial Cash-Out Point (Unspent)',
+                      desc: 'Funds landed in Binance custodial hot wallet. Unspent in internal UID #8849201. Actionable!',
+                      color: 'emerald'
+                    }
+                  ]).map((card, idx) => (
+                    <div key={idx} className={`p-3.5 rounded-xl border space-y-1 ${
+                      darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                    }`}>
+                      <div className={`flex items-center gap-1.5 font-bold text-xs ${
+                        card.color === 'red' ? 'text-red-600 dark:text-red-400' :
+                        card.color === 'amber' ? 'text-amber-600 dark:text-amber-400' :
+                        card.color === 'purple' ? 'text-purple-600 dark:text-purple-400' :
+                        card.color === 'blue' ? 'text-blue-600 dark:text-blue-400' :
+                        'text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        {card.icon === 'flame' && <Flame className="w-3.5 h-3.5" />}
+                        {card.icon === 'gitfork' && <GitFork className="w-3.5 h-3.5" />}
+                        {card.icon === 'building' && <Building2 className="w-3.5 h-3.5" />}
+                        {card.icon === 'shield' && <ShieldCheck className="w-3.5 h-3.5" />}
+                        {card.icon === 'clock' && <Clock className="w-3.5 h-3.5" />}
+                        <span>{card.title}</span>
+                      </div>
+                      <p className={`text-[11px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {card.desc}
+                      </p>
                     </div>
-                    <p className={`text-[11px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Victim's funds were 100% drained in 134s. High-velocity automated laundering bot detected.
-                    </p>
-                  </div>
-
-                  <div className={`p-3.5 rounded-xl border space-y-1 ${
-                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
-                  }`}>
-                    <div className="flex items-center gap-1.5 font-bold text-xs text-purple-600 dark:text-purple-400">
-                      <GitFork className="w-3.5 h-3.5" />
-                      <span>Cross-Chain Layering (Bridge Hop)</span>
-                    </div>
-                    <p className={`text-[11px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Tokens hopped across chains via Stargate router to evade native Polygon mempool filters.
-                    </p>
-                  </div>
-
-                  <div className={`p-3.5 rounded-xl border space-y-1 ${
-                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
-                  }`}>
-                    <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-600 dark:text-emerald-400">
-                      <Building2 className="w-3.5 h-3.5" />
-                      <span>Custodial Cash-Out Point (Unspent)</span>
-                    </div>
-                    <p className={`text-[11px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Funds landed in Binance custodial hot wallet. Unspent in internal UID #8849201. Actionable!
-                    </p>
-                  </div>
+                  ))}
                 </div>
 
               </div>

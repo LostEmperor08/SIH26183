@@ -22,16 +22,68 @@ export const KNOWN_EXCHANGES = {
   "0x6cc5f688a30d3790e98f5bbf9687c936df32bdf6": { name: "OKX Hot Wallet 1", exchange: "OKEx", fiuRegistered: false, complianceEmail: "enforcement@okx.com", fiuId: "International Reporting VASP", status: "International VASP" }
 };
 
-// Rate conversion helper
+// Detect malicious dusting / phishing airdrop tokens (containing scam URLs, Telegram links, voucher/gift hooks)
+export function isScamOrSpamToken(symbol, name) {
+  const sym = (symbol || '').trim();
+  const nm = (name || '').trim();
+  const combined = (sym + ' ' + nm).toLowerCase();
+
+  // 1. Phishing / spam domain & URL patterns
+  if (
+    combined.includes('t.me') ||
+    combined.includes('t.ly') ||
+    combined.includes('fli.so') ||
+    combined.includes('eeth') ||
+    combined.includes('.lat') ||
+    combined.includes('.top') ||
+    combined.includes('.xyz') ||
+    combined.includes('.club') ||
+    combined.includes('.site') ||
+    combined.includes('.link') ||
+    combined.includes('http') ||
+    combined.includes('www.') ||
+    combined.includes('voucher') ||
+    combined.includes('claim') ||
+    combined.includes('gift') ||
+    combined.includes('airdrop') ||
+    combined.includes('redeem') ||
+    combined.includes('reward') ||
+    combined.includes('bonus') ||
+    combined.includes('swap your')
+  ) {
+    return true;
+  }
+
+  // 2. Homoglyph / Cyrillic fake symbols (e.g. Cyrillic letters mimicking USDT)
+  if (/[^\x20-\x7E]/.test(sym)) {
+    return true;
+  }
+
+  // 3. Excessively long symbol (legit crypto tickers are <= 10 chars)
+  if (sym.length > 12) {
+    return true;
+  }
+
+  return false;
+}
+
+// Rate conversion helper (Strict forensic oracle whitelist: unknown/unverified tokens = ₹0)
 export function getExchangeRate(symbol, chain) {
-  const s = (symbol || '').toUpperCase();
-  if (s.includes('USD') || s.includes('DAI')) return 89; // USDT, USDC, DAI: ~₹89
-  if (s.includes('ETH') || s.includes('WETH')) return 240000; // ETH: ~₹2.4L
-  if (s.includes('POL') || s.includes('MATIC')) return 38; // POL: ~₹38
-  if (s.includes('BTC') || s.includes('WBTC')) return 5200000; // BTC: ~₹52L
-  if (s.includes('TRX')) return 14; // TRX: ~₹14
-  if (s.includes('SOL')) return 13500; // SOL: ~₹13,500
-  return 89;
+  const s = (symbol || '').toUpperCase().trim();
+  if (isScamOrSpamToken(s, '')) return 0;
+
+  // Recognized major liquid currencies pegged to INR
+  if (s === 'USDT' || s === 'USDT0' || s === 'USDC' || s === 'DAI' || s === 'BUSD' || s === 'FDUSD' || s === 'USDD') {
+    return 89; // ~$1 USD = ₹89 INR
+  }
+  if (s === 'ETH' || s === 'WETH') return 240000; // ETH: ~₹2.4 Lakh
+  if (s === 'POL' || s === 'MATIC' || s === 'WPOL' || s === 'WMATIC') return 38; // POL: ~₹38
+  if (s === 'BTC' || s === 'WBTC') return 5200000; // BTC: ~₹52 Lakh
+  if (s === 'TRX') return 14; // TRX: ~₹14
+  if (s === 'SOL') return 13500; // SOL: ~₹13,500
+
+  // Strict Forensic Standard: Unknown / airdropped tokens with no verified DEX liquidity = ₹0
+  return 0;
 }
 
 // Format timestamp to Indian Standard Time
@@ -129,7 +181,9 @@ export async function fetchEvmChainTxs(address, chainId = 137) {
     const rawVal = Number(t.total?.value || '0');
     const valFloat = decimals > 0 ? rawVal / Math.pow(10, decimals) : rawVal;
     const sym = t.token?.symbol || 'USDT';
-    const rate = getExchangeRate(sym, chainName.toLowerCase());
+    const name = t.token?.name || '';
+    const isSpam = isScamOrSpamToken(sym, name);
+    const rate = isSpam ? 0 : getExchangeRate(sym, chainName.toLowerCase());
     const inrVal = Math.round(valFloat * rate);
     const fromAddr = t.from?.hash || t.from || '';
     const toAddr = t.to?.hash || t.to || '';
@@ -139,15 +193,19 @@ export async function fetchEvmChainTxs(address, chainId = 137) {
       from: fromAddr,
       to: toAddr,
       valFloat: valFloat,
-      amount: `${valFloat < 0.01 && valFloat > 0 ? valFloat.toFixed(4) : valFloat.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${sym}`,
-      inr: '₹' + inrVal.toLocaleString('en-IN'),
+      amount: isSpam
+        ? `${valFloat.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${sym}`
+        : `${valFloat < 0.01 && valFloat > 0 ? valFloat.toFixed(4) : valFloat.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${sym}`,
+      inr: isSpam ? '₹0 (Dusting Scam)' : '₹' + inrVal.toLocaleString('en-IN'),
       inrNum: inrVal,
       symbol: sym,
+      tokenName: name,
+      isSpam: isSpam,
       timestamp: formatIST(t.timestamp),
       rawTime: new Date(t.timestamp).getTime() || Date.now(),
       isToken: true,
       explorerUrl: `${explorerBase}/tx/${t.transaction_hash || t.hash}`,
-      status: 'Confirmed'
+      status: isSpam ? 'Quarantined Dust' : 'Confirmed'
     };
   });
 
@@ -303,38 +361,68 @@ export async function fetchAndBuildCase(rawAddress, ncrpInput = '', userNetwork 
 
   const txs = queryResult.transactions;
   const hasOnChainData = txs.length > 0;
+  const lowerAddr = addr.toLowerCase();
+  const shorten = (a) => a && a.length > 10 ? `${a.substring(0, 6)}...${a.substring(a.length - 4)}` : (a || '0x...');
 
   // Case identifiers
   const ncrpId = ncrpInput.trim() || `2026/NCRP/${Math.floor(100000 + Math.random() * 900000)}`;
   const firNumber = `FIR-402/2026 (Cyber Crime PS, Bengaluru)`;
   const network = queryResult.chain;
 
-  // Find counterparties and evaluate exchanges
-  let targetVasp = 'Binance Exchange';
-  let vaspComplianceEmail = 'law-enforcement@binance.com';
-  let vaspStatus = 'FIU-IND Registered (Reporting Entity #FIU-2023-VASP-88)';
-  let totalCryptoNum = 0;
-  let totalInrNum = 0;
+  // 2. Real-Time Forensic Accounting & Inflow/Outflow Clustering
+  let legitimateInflowUsdt = 0;
+  let legitimateOutflowUsdt = 0;
+  let spamTokensCount = 0;
   let topCryptoSymbol = isEvm ? 'USDT' : (isTron ? 'USDT' : 'BTC');
+  const inboundMap = {};
+  const outboundMap = {};
 
-  // Check if any recipient in the transactions is a known VASP
   for (const t of txs) {
-    totalInrNum += t.inrNum || 0;
-    totalCryptoNum += t.valFloat || 0;
-    if (t.symbol) topCryptoSymbol = t.symbol;
+    if (t.isSpam) {
+      spamTokensCount++;
+      continue;
+    }
 
+    const fromLower = (t.from || '').toLowerCase();
     const toLower = (t.to || '').toLowerCase();
-    if (KNOWN_EXCHANGES[toLower]) {
-      const ex = KNOWN_EXCHANGES[toLower];
-      targetVasp = ex.name;
-      vaspComplianceEmail = ex.complianceEmail;
-      vaspStatus = ex.status;
-      break;
+    const isSuspectSender = fromLower === lowerAddr;
+    const isSuspectReceiver = toLower === lowerAddr;
+
+    const usdtEq = t.inrNum > 0 ? (t.inrNum / 89) : (t.valFloat || 0);
+
+    if (isSuspectReceiver && !isSuspectSender) {
+      legitimateInflowUsdt += usdtEq;
+      inboundMap[fromLower] = (inboundMap[fromLower] || 0) + usdtEq;
+    }
+    if (isSuspectSender && !isSuspectReceiver) {
+      legitimateOutflowUsdt += usdtEq;
+      outboundMap[toLower] = (outboundMap[toLower] || 0) + usdtEq;
+    }
+
+    if (t.symbol && !t.isSpam) {
+      topCryptoSymbol = t.symbol;
     }
   }
 
-  // Fallback realistic sums if 0
-  if (totalInrNum === 0) {
+  // Calculate Docket Total Volume
+  let totalCryptoNum = 0;
+  let totalInrNum = 0;
+
+  if (legitimateInflowUsdt > 0 || legitimateOutflowUsdt > 0) {
+    totalCryptoNum = Math.max(legitimateInflowUsdt, legitimateOutflowUsdt);
+    totalInrNum = Math.round(totalCryptoNum * 89);
+  } else if (hasOnChainData) {
+    // Only native transactions occurred
+    const nonSpam = txs.filter(t => !t.isSpam);
+    for (const t of nonSpam) {
+      totalInrNum += t.inrNum || 0;
+      totalCryptoNum += t.valFloat || 0;
+      if (t.symbol) topCryptoSymbol = t.symbol;
+    }
+  }
+
+  // Fallback for mock demo query if zero
+  if (totalInrNum === 0 && !hasOnChainData) {
     totalInrNum = 2125000;
     totalCryptoNum = 25000;
     topCryptoSymbol = 'USDT';
@@ -343,33 +431,176 @@ export async function fetchAndBuildCase(rawAddress, ncrpInput = '', userNetwork 
   const totalValueInr = '₹' + Math.round(totalInrNum).toLocaleString('en-IN') + ' INR';
   const totalValueUsdt = `${totalCryptoNum < 0.01 && totalCryptoNum > 0 ? totalCryptoNum.toFixed(4) : totalCryptoNum.toLocaleString('en-US', { maximumFractionDigits: 2 })} ${topCryptoSymbol}`;
 
-  // Build Transaction History Table Items
+  // 3. Counterparty Resolution: Custodial VASP vs Unhosted Private Wallet (EOA)
+  const sortedInbound = Object.entries(inboundMap).sort((a, b) => b[1] - a[1]);
+  const sortedOutbound = Object.entries(outboundMap).sort((a, b) => b[1] - a[1]);
+
+  const topInboundSender = sortedInbound[0]?.[0] || (txs.find(t => !t.isSpam && (t.to || '').toLowerCase() === lowerAddr)?.from || '');
+  const topOutboundRecipient = sortedOutbound[0]?.[0] || (txs.find(t => !t.isSpam && (t.from || '').toLowerCase() === lowerAddr)?.to || '');
+
+  let targetVasp = '';
+  let vaspComplianceEmail = '';
+  let vaspStatus = '';
+  let isCustodialVasp = false;
+
+  // Check if primary recipient is a known exchange
+  const knownEx = KNOWN_EXCHANGES[topOutboundRecipient.toLowerCase()];
+  if (knownEx) {
+    targetVasp = knownEx.name;
+    vaspComplianceEmail = knownEx.complianceEmail;
+    vaspStatus = knownEx.status;
+    isCustodialVasp = true;
+  } else {
+    // Check if any outbound recipient matched an exchange
+    let foundEx = null;
+    for (const [rAddr] of sortedOutbound) {
+      if (KNOWN_EXCHANGES[rAddr.toLowerCase()]) {
+        foundEx = KNOWN_EXCHANGES[rAddr.toLowerCase()];
+        break;
+      }
+    }
+    if (foundEx) {
+      targetVasp = foundEx.name;
+      vaspComplianceEmail = foundEx.complianceEmail;
+      vaspStatus = foundEx.status;
+      isCustodialVasp = true;
+    } else {
+      // Unhosted Private Wallet (EOA)
+      targetVasp = topOutboundRecipient ? `Unhosted Private EOA (${shorten(topOutboundRecipient)})` : 'Unhosted Private Wallet';
+      vaspComplianceEmail = 'N/A — Non-Custodial Private Key';
+      vaspStatus = 'Unhosted EOA (Private Key — Cannot be frozen via VASP email)';
+      isCustodialVasp = false;
+    }
+  }
+
+  // 4. Real Dwell Time & Velocity Calculation
+  const legitimateTxs = txs.filter(t => !t.isSpam).sort((a, b) => a.rawTime - b.rawTime);
+  let dwellSec = 0;
+  let dwellCount = 0;
+
+  for (let i = 1; i < legitimateTxs.length; i++) {
+    const prev = legitimateTxs[i - 1];
+    const curr = legitimateTxs[i];
+    const prevIsReceiver = (prev.to || '').toLowerCase() === lowerAddr;
+    const currIsSender = (curr.from || '').toLowerCase() === lowerAddr;
+    if (prevIsReceiver && currIsSender) {
+      const diff = (curr.rawTime - prev.rawTime) / 1000;
+      if (diff >= 0) {
+        dwellSec += diff;
+        dwellCount++;
+      }
+    }
+  }
+
+  // Fallback to sequential legitimate transfer intervals if no direct IN->OUT pair
+  if (dwellCount === 0 && legitimateTxs.length > 1) {
+    for (let i = 1; i < legitimateTxs.length; i++) {
+      const diff = (legitimateTxs[i].rawTime - legitimateTxs[i - 1].rawTime) / 1000;
+      if (diff > 0) {
+        dwellSec += diff;
+        dwellCount++;
+      }
+    }
+  }
+
+  const avgDwellSec = dwellCount > 0 ? (dwellSec / dwellCount) : 14400; // default 4 hrs
+
+  // Formatted Dwell
+  let dwellFormatted = '';
+  if (avgDwellSec < 180) {
+    dwellFormatted = `${Math.round(avgDwellSec)} seconds`;
+  } else if (avgDwellSec < 7200) {
+    dwellFormatted = `${Math.round(avgDwellSec / 60)} minutes`;
+  } else if (avgDwellSec < 86400) {
+    dwellFormatted = `${(avgDwellSec / 3600).toFixed(1)} hours`;
+  } else {
+    dwellFormatted = `${(avgDwellSec / 86400).toFixed(1)} days`;
+  }
+
+  // Formatted Velocity
+  let velocityFormatted = '';
+  if (avgDwellSec < 180) {
+    velocityFormatted = `${(totalCryptoNum / Math.max(avgDwellSec, 1)).toFixed(1)} ${topCryptoSymbol}/sec`;
+  } else if (avgDwellSec < 7200) {
+    velocityFormatted = `${(totalCryptoNum / Math.max(avgDwellSec / 60, 1)).toFixed(2)} ${topCryptoSymbol}/min`;
+  } else {
+    velocityFormatted = `${(totalCryptoNum / Math.max(avgDwellSec / 3600, 1)).toFixed(2)} ${topCryptoSymbol}/hr`;
+  }
+
+  // Dynamic Forensic Risk Score
+  const isRapidBurner = avgDwellSec < 180 && legitimateOutflowUsdt > 0.7 * legitimateInflowUsdt && legitimateInflowUsdt > 1000;
+  let riskScore = 24;
+  let riskLevel = 'LOW_RISK';
+  let riskLabel = 'Low Risk: Standard Peer-to-Peer Wallet';
+
+  if (isRapidBurner) {
+    riskScore = 94;
+    riskLevel = 'CRITICAL_FRAUD';
+    riskLabel = 'Critical Risk: Automated Burner Mule Bot';
+  } else if (avgDwellSec < 600 && totalCryptoNum > 10000) {
+    riskScore = 78;
+    riskLevel = 'HIGH_RISK';
+    riskLabel = 'High Risk: Rapid Large-Volume Transit';
+  } else if (avgDwellSec < 3600) {
+    riskScore = 48;
+    riskLevel = 'MODERATE_RISK';
+    riskLabel = 'Moderate Risk: Swift Transit Pattern';
+  } else if (hasOnChainData) {
+    riskScore = 24;
+    riskLevel = 'LOW_RISK';
+    riskLabel = 'Low Risk: Human Peer-to-Peer Activity';
+  }
+
+  // 5. Build Transaction History Table Items
   let tableTransactions = [];
   if (hasOnChainData) {
     tableTransactions = txs.map((t, idx) => {
       let typ = 'TRANSFER';
-      if (t.inrNum > 500000) typ = 'HIGH_VALUE';
-      if (KNOWN_EXCHANGES[(t.to || '').toLowerCase()]) typ = 'VASP_DEPOSIT';
-      if (idx === 0 && txs.length > 1) typ = 'RAPID_DRAIN';
+      if (t.isSpam) {
+        typ = 'SPAM_AIRDROP';
+      } else if (t.inrNum > 500000) {
+        typ = 'HIGH_VALUE';
+      } else if (KNOWN_EXCHANGES[(t.to || '').toLowerCase()]) {
+        typ = 'VASP_DEPOSIT';
+      } else if (isRapidBurner && idx === 0) {
+        typ = 'RAPID_DRAIN';
+      }
+
+      const isSuspectFrom = (t.from || '').toLowerCase() === lowerAddr;
+      const isSuspectTo = (t.to || '').toLowerCase() === lowerAddr;
+
+      let fromLabel = isSuspectFrom ? 'Suspect Wallet' : 'Inbound Counterparty';
+      let toLabel = isSuspectTo ? 'Suspect Wallet' : 'Outbound Counterparty';
+
+      if (t.isSpam) {
+        fromLabel = 'Phishing Airdrop Sender';
+        toLabel = 'Suspect Wallet (Target of Dusting)';
+      } else {
+        if (KNOWN_EXCHANGES[(t.to || '').toLowerCase()]) {
+          toLabel = KNOWN_EXCHANGES[(t.to || '').toLowerCase()].name;
+        } else if (KNOWN_EXCHANGES[(t.from || '').toLowerCase()]) {
+          fromLabel = KNOWN_EXCHANGES[(t.from || '').toLowerCase()].name;
+        }
+      }
 
       return {
         hop: idx + 1,
         hash: t.hash,
         timeStamp: t.timestamp,
         from: t.from,
-        fromLabel: t.from.toLowerCase() === addr.toLowerCase() ? 'Suspect Wallet' : (idx === 0 ? 'Reported Origin' : 'Mule Counterparty'),
+        fromLabel: fromLabel,
         to: t.to,
-        toLabel: KNOWN_EXCHANGES[(t.to || '').toLowerCase()] ? KNOWN_EXCHANGES[(t.to || '').toLowerCase()].name : (t.to.toLowerCase() === addr.toLowerCase() ? 'Suspect Wallet' : 'Intermediary Mule'),
+        toLabel: toLabel,
         amount: t.amount,
         inr: t.inr,
         type: typ,
         duration: 'On-Chain',
-        status: idx === 0 ? 'Unspent' : 'Confirmed',
+        status: t.isSpam ? 'Quarantined' : (idx === 0 ? 'Unspent' : 'Confirmed'),
         explorerUrl: t.explorerUrl
       };
     });
   } else {
-    // Construct investigative forensic ledger for this specific suspect address
+    // Construct investigative forensic ledger for fallback mock query
     tableTransactions = [
       {
         hop: 1,
@@ -419,58 +650,62 @@ export async function fetchAndBuildCase(rawAddress, ncrpInput = '', userNetwork 
     ];
   }
 
-  // Construct Progressive 4-Node Attribution Graph
+  // 6. Dynamic Topological Graph Nodes
   const nodes = [
     {
       id: "1",
-      label: "Victim / Origin",
-      subLabel: "Citizen Inflow Source",
+      label: topInboundSender ? `Origin: ${shorten(topInboundSender)}` : "Victim / Origin",
+      subLabel: "Primary Inflow Source",
       type: "VICTIM",
-      address: hasOnChainData && txs[0]?.from ? txs[0].from : "0x71C85782B3a982E47833005A3A00000000000001",
+      address: topInboundSender || (hasOnChainData && txs[0]?.from ? txs[0].from : "0x71C85782B3a982E47833005A3A00000000000001"),
       chain: network,
-      status: "Clean",
+      status: "Inflow Verified",
       time: tableTransactions[0]?.timeStamp || formatIST(Date.now() - 1800000),
       volume: totalValueUsdt,
-      behavior: "Citizen was defrauded through illicit investment/part-time task scam."
+      behavior: `Primary source of funds on ${network}. Transferred legitimate volume.`
     },
     {
       id: "2",
       label: "Suspect Wallet",
-      subLabel: hasOnChainData ? `Active Suspect (${txs.length} txs)` : "Queried Target Mule",
-      type: "BURNER_MULE",
+      subLabel: `${shorten(addr)} (${txs.length} txs)`,
+      type: isRapidBurner ? "BURNER_MULE" : "SUSPECT",
       address: addr,
       chain: network,
-      status: hasOnChainData ? `On-Chain Synced (${txs.length} tx)` : "Anomaly: Rapid Drain",
-      timeSpent: "2m 14s",
+      status: isRapidBurner ? "Rapid Drain Bot" : (hasOnChainData ? `${txs.length} On-Chain Txs` : "Queried Target"),
+      timeSpent: dwellFormatted,
       time: tableTransactions[0]?.timeStamp || formatIST(Date.now() - 1200000),
       volume: totalValueUsdt,
-      behavior: `Suspect address entered for investigation. Received ${totalValueUsdt} (${totalValueInr}) on ${network}.`
+      behavior: `Queried wallet. Dwell time: ${dwellFormatted} (${velocityFormatted}). ${isRapidBurner ? 'High velocity drain.' : 'Normal peer-to-peer dwell behavior.'}`
     },
     {
       id: "3",
-      label: "Intermediary / Bridge",
-      subLabel: "Layering Router",
-      type: "BRIDGE",
-      address: "0x45A9102B3cda982E47833005A3A000000000088bc",
-      chain: `${network} ➔ Ethereum`,
-      status: "Cross-Chain Router",
-      timeSpent: "5m 40s",
+      label: topOutboundRecipient ? (isCustodialVasp ? targetVasp : `Recipient: ${shorten(topOutboundRecipient)}`) : "Intermediary / Bridge",
+      subLabel: isCustodialVasp ? "Custodial Hot Wallet" : "Downstream Recipient EOA",
+      type: isCustodialVasp ? "EXCHANGE" : "EOA_WALLET",
+      address: topOutboundRecipient || "0xbf5E3c7aFBe37d13B040ADB11d497BDbe061c87b",
+      chain: network,
+      status: isCustodialVasp ? "Target: Recoverable" : "Unhosted Private EOA",
+      timeSpent: dwellFormatted,
       time: formatIST(Date.now() - 600000),
       volume: totalValueUsdt,
-      behavior: "Automated routing and liquidity swap to obfuscate on-chain trail."
+      behavior: isCustodialVasp
+        ? `Consolidated into ${targetVasp}. Custodial hot wallet deposit verified.`
+        : `Transferred to private unhosted wallet ${shorten(topOutboundRecipient)} on ${network}.`
     },
     {
       id: "4",
-      label: targetVasp,
-      subLabel: "Custodial Hot Deposit",
-      type: "EXCHANGE",
-      address: "0x28c6c06298d514db089934071355e5743bf21d60",
-      chain: "Ethereum",
-      status: "Target: Recoverable",
+      label: isCustodialVasp ? `${targetVasp} Internal UID` : "Terminal Chain Status",
+      subLabel: isCustodialVasp ? "Actionable Freeze Target" : "Unhosted Private Key",
+      type: isCustodialVasp ? "EXCHANGE" : "EOA_WALLET",
+      address: isCustodialVasp ? (KNOWN_EXCHANGES[topOutboundRecipient.toLowerCase()] ? topOutboundRecipient : "0x28c6c06298d514db089934071355e5743bf21d60") : (topOutboundRecipient || addr),
+      chain: network,
+      status: isCustodialVasp ? "Target: Recoverable" : "Non-Custodial Destination",
       time: formatIST(Date.now() - 60000),
       volume: totalValueUsdt,
-      isActionable: true,
-      behavior: `Final consolidation into ${targetVasp}. Unspent balance confirmed ready for Section 94 BNSS emergency freeze.`
+      isActionable: isCustodialVasp,
+      behavior: isCustodialVasp
+        ? `Unspent in ${targetVasp}. Immediate Section 94 BNSS debit-freeze notice enforceable!`
+        : `Terminal destination is a non-custodial private key. Section 94 notice cannot freeze an unhosted key. Requires secondary-hop tracing or upstream KYC subpoena.`
     }
   ];
 
@@ -480,8 +715,8 @@ export async function fetchAndBuildCase(rawAddress, ncrpInput = '', userNetwork 
       to: "2",
       amount: totalValueUsdt,
       inr: totalValueInr,
-      type: "RAPID",
-      duration: "2m 14s",
+      type: isRapidBurner ? "RAPID" : "TRANSFER",
+      duration: dwellFormatted,
       txHash: tableTransactions[0]?.hash || "0x9ab8134fa8892147812bc312891fa30df9821478"
     },
     {
@@ -489,18 +724,46 @@ export async function fetchAndBuildCase(rawAddress, ncrpInput = '', userNetwork 
       to: "3",
       amount: totalValueUsdt,
       inr: totalValueInr,
-      type: "BRIDGE_HOP",
-      duration: "5m 40s",
-      txHash: tableTransactions[1]?.hash || "0x1fe227918ba982147812bc312891fa30df9821489"
+      type: isCustodialVasp ? "DEPOSIT" : "TRANSFER",
+      duration: dwellFormatted,
+      txHash: tableTransactions[1]?.hash || tableTransactions[0]?.hash || "0x1fe227918ba982147812bc312891fa30df9821489"
     },
     {
       from: "3",
       to: "4",
       amount: totalValueUsdt,
       inr: totalValueInr,
-      type: "DEPOSIT",
-      duration: "10m 12s",
-      txHash: tableTransactions[2]?.hash || "0x7bb90a1048892147812bc312891fa30df9821404"
+      type: isCustodialVasp ? "DEPOSIT" : "SETTLED",
+      duration: "Settled",
+      txHash: tableTransactions[2]?.hash || tableTransactions[0]?.hash || "0x7bb90a1048892147812bc312891fa30df9821404"
+    }
+  ];
+
+  // 7. Dynamic Forensic Insight Cards
+  const insightCards = [
+    {
+      icon: isRapidBurner ? 'flame' : 'clock',
+      title: isRapidBurner ? `Velocity Anomaly (${velocityFormatted})` : `Dwell Time (${dwellFormatted})`,
+      desc: isRapidBurner
+        ? `100% of received funds drained within ${dwellFormatted}. High-velocity automated laundering bot detected.`
+        : `Average dwell time is ${dwellFormatted} (${velocityFormatted}). Typical peer-to-peer and human trading behavior.`,
+      color: isRapidBurner ? 'red' : 'blue'
+    },
+    {
+      icon: 'gitfork',
+      title: spamTokensCount > 0 ? `Spam Airdrops Quarantined (${spamTokensCount})` : `Routing & Topology (${network})`,
+      desc: spamTokensCount > 0
+        ? `Quarantined ${spamTokensCount} phishing/dusting tokens with URL signatures. Excluded from case valuation to prevent phantom inflation.`
+        : `Transfers executed directly on ${network} native ledger without smart contract mixers or obfuscation protocols.`,
+      color: spamTokensCount > 0 ? 'amber' : 'purple'
+    },
+    {
+      icon: isCustodialVasp ? 'building' : 'shield',
+      title: isCustodialVasp ? `Target VASP (${targetVasp})` : `Unhosted Private Destination`,
+      desc: isCustodialVasp
+        ? `Funds identified in ${targetVasp} custodial hot wallet. Immediate Section 94 BNSS emergency freeze enforceable!`
+        : `Outflow sent to private EOA ${shorten(topOutboundRecipient)}. Non-custodial private keys cannot be frozen via VASP email; trace secondary hops.`,
+      color: isCustodialVasp ? 'emerald' : 'blue'
     }
   ];
 
@@ -515,26 +778,47 @@ export async function fetchAndBuildCase(rawAddress, ncrpInput = '', userNetwork 
       officer: "Insp. R. Deshmukh",
       station: "Cyber Crime PS, Bengaluru",
       timestamp: formatIST(Date.now()),
-      riskScore: hasOnChainData ? 95 : 92,
-      riskLevel: "CRITICAL_FRAUD",
-      riskLabel: `Critical Risk (${hasOnChainData ? txs.length + ' Live Transactions Traced' : 'Mule Layering Detected'})`,
+      riskScore: riskScore,
+      riskLevel: riskLevel,
+      riskLabel: riskLabel,
       totalValueUsdt: totalValueUsdt,
       totalValueInr: totalValueInr,
       targetVasp: targetVasp,
       vaspComplianceEmail: vaspComplianceEmail,
       vaspStatus: vaspStatus,
-      unspentStatus: `Deposit landed recently — Unspent in ${targetVasp} Custodial Hot Wallet — Immediate Freeze Enforceable`,
+      isCustodialVasp: isCustodialVasp,
+      onChainStatusTitle: isCustodialVasp ? 'Unspent in Hot Wallet' : 'Unhosted Private EOA',
+      onChainStatusSub: isCustodialVasp ? 'Immediate debit-freeze window active' : 'Non-custodial (Requires 2nd hop trace)',
+      unspentStatus: isCustodialVasp
+        ? `Deposit confirmed in ${targetVasp} Custodial Hot Wallet — Immediate Section 94 BNSS freeze enforceable`
+        : `Funds held in private key ${shorten(topOutboundRecipient)} — Cannot issue Section 94 freeze to unhosted EOA`,
       network: network,
       crimeType: "Real-Time Suspect Crypto Fraud Attribution",
-      suspectAddress: addr
+      suspectAddress: addr,
+      dwellFormatted: dwellFormatted,
+      velocityFormatted: velocityFormatted,
+      spamCount: spamTokensCount
     },
+    insightCards: insightCards,
     nodes: nodes,
     edges: edges,
     transactions: tableTransactions,
     anomalies: [
-      { icon: "flame", tag: "Burner Sweep", text: "Rapid drainage pattern observed from suspect address." },
-      { icon: "shuffle", tag: "Layering / Mule", text: "Automated routing through high-velocity transit addresses." },
-      { icon: "bridge", tag: "Cross-Chain Bridge", text: "Liquidity hop across networks to break direct tracking." }
+      {
+        icon: isRapidBurner ? "flame" : "clock",
+        tag: isRapidBurner ? "Burner Sweep" : "Human Dwell Pattern",
+        text: isRapidBurner ? `Rapid drainage pattern observed: ${dwellFormatted}.` : `Standard fund dwell time observed: ${dwellFormatted}.`
+      },
+      {
+        icon: spamTokensCount > 0 ? "alert-triangle" : "shuffle",
+        tag: spamTokensCount > 0 ? "Dusting Spam Quarantined" : "Direct On-Chain Transit",
+        text: spamTokensCount > 0 ? `Isolated ${spamTokensCount} zero-value scam airdrops.` : `Direct peer transfers on ${network}.`
+      },
+      {
+        icon: isCustodialVasp ? "building" : "lock",
+        tag: isCustodialVasp ? "Custodial VASP" : "Unhosted Private EOA",
+        text: isCustodialVasp ? `Target exchange identified as ${targetVasp}.` : `Downstream entity is an unhosted private key.`
+      }
     ]
   };
 }
