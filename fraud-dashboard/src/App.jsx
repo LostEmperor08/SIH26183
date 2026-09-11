@@ -37,7 +37,13 @@ import {
   Download,
   Gavel,
   BadgeCheck,
-  CornerDownRight
+  CornerDownRight,
+  Plus,
+  Filter,
+  Send,
+  Printer,
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 
 // ============================================================================
@@ -202,6 +208,236 @@ const DEMO_CASES = {
 };
 
 // ============================================================================
+// NCRP VAULT & VASP DIRECTORY COMPREHENSIVE DATASETS
+// ============================================================================
+const VAULT_CASES_INITIAL = [
+  {
+    id: "case-1",
+    key: "polygon",
+    ncrpId: "2026/NCRP/892110",
+    firNumber: "FIR-402/2026",
+    station: "Cyber Crime PS, Bengaluru",
+    state: "Karnataka",
+    officer: "Insp. R. Deshmukh",
+    timestamp: "11-Sep-2026 21:45 IST",
+    crimeType: "Part-Time Task Scam / Pig-Butchering Fraud",
+    suspectAddress: "0xe6D6947c424AbbAB1C7b3866DC65614EEEC65358",
+    network: "Polygon",
+    amountCrypto: "25,000 USDT",
+    amountInr: "₹21,25,000",
+    targetVasp: "Binance Global",
+    vaspEmail: "law-enforcement@binance.com",
+    riskLevel: "CRITICAL",
+    status: "Unspent in Hot Wallet (Freeze Priority 1)",
+    isActionable: true
+  },
+  {
+    id: "case-2",
+    key: "tron",
+    ncrpId: "2026/NCRP/781092",
+    firNumber: "FIR-719/2026",
+    station: "Cyberabad Cyber PS",
+    state: "Telangana",
+    officer: "ACP K. Varma",
+    timestamp: "11-Sep-2026 21:50 IST",
+    crimeType: "Telegram Work-From-Home Task Fraud",
+    suspectAddress: "TYD1xK8vW2yP5nRt8zC1aXs6dF992Ka",
+    network: "TRON",
+    amountCrypto: "40,000 USDT",
+    amountInr: "₹34,00,000",
+    targetVasp: "CoinDCX India",
+    vaspEmail: "nodal-lea@coindcx.com",
+    riskLevel: "CRITICAL",
+    status: "Section 94 BNSS Order Issued",
+    isActionable: true
+  },
+  {
+    id: "case-3",
+    key: "bitcoin",
+    ncrpId: "2026/NCRP/650912",
+    firNumber: "FIR-128/2026",
+    station: "State Cyber Police, Delhi",
+    state: "Delhi",
+    officer: "SI Vikram Malik",
+    timestamp: "11-Sep-2026 21:52 IST",
+    crimeType: "Corporate Hospital Ransomware Attack (LockBit)",
+    suspectAddress: "bc1qa77j99x0k8vW2yP5nRt8zC1aXs6dF",
+    network: "Bitcoin",
+    amountCrypto: "2.45 BTC",
+    amountInr: "₹1,42,10,000",
+    targetVasp: "Kraken Exchange",
+    vaspEmail: "compliance@kraken.com",
+    riskLevel: "CRITICAL",
+    status: "Peel Chain Split - Liquidating",
+    isActionable: true
+  },
+  {
+    id: "case-4",
+    key: "polygon",
+    ncrpId: "2026/NCRP/904123",
+    firNumber: "FIR-311/2026",
+    station: "Maharashtra Cyber, Bandra",
+    state: "Maharashtra",
+    officer: "Insp. Sunita Patil",
+    timestamp: "10-Sep-2026 18:30 IST",
+    crimeType: "Fake Stock Trading App WhatsApp Syndicate",
+    suspectAddress: "0x91b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+    network: "Ethereum",
+    amountCrypto: "18,500 USDT",
+    amountInr: "₹15,72,500",
+    targetVasp: "CoinSwitch Kuber",
+    vaspEmail: "legal-lea@coinswitch.co",
+    riskLevel: "HIGH",
+    status: "Domestic VASP Account Identified",
+    isActionable: true
+  },
+  {
+    id: "case-5",
+    key: "polygon",
+    ncrpId: "2026/NCRP/512908",
+    firNumber: "FIR-882/2026",
+    station: "Pune Cyber Crime Cell",
+    state: "Maharashtra",
+    officer: "PI Ajay Shinde",
+    timestamp: "09-Sep-2026 14:15 IST",
+    crimeType: "Deepfake Executive Video Call Impersonation",
+    suspectAddress: "0x3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+    network: "Polygon",
+    amountCrypto: "32,000 USDT",
+    amountInr: "₹27,20,000",
+    targetVasp: "Mudrex",
+    vaspEmail: "compliance@mudrex.com",
+    riskLevel: "HIGH",
+    status: "Partial Liquidation Alert",
+    isActionable: true
+  },
+  {
+    id: "case-6",
+    key: "tron",
+    ncrpId: "2026/NCRP/441209",
+    firNumber: "FIR-105/2026",
+    station: "Ahmedabad Cyber PS",
+    state: "Gujarat",
+    officer: "DySP N. Patel",
+    timestamp: "08-Sep-2026 11:20 IST",
+    crimeType: "Matrimonial Customs Parcel Extortion Scam",
+    suspectAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    network: "Solana",
+    amountCrypto: "150 SOL",
+    amountInr: "₹19,50,000",
+    targetVasp: "WazirX India",
+    vaspEmail: "lawenforcement@wazirx.com",
+    riskLevel: "HIGH",
+    status: "Domestic P2P Account Frozen",
+    isActionable: true
+  }
+];
+
+const VASP_DIRECTORY_DATA = [
+  {
+    id: "binance",
+    name: "Binance Global",
+    entity: "Binance Holdings Limited (Cayman)",
+    fiu: "FIU-2023-VASP-88",
+    email: "law-enforcement@binance.com",
+    sla: "< 45 Mins",
+    type: "GLOBAL",
+    status: "Global Reporting Entity",
+    coverage: "24/7 Global Law Enforcement Operations",
+    portal: "https://kodexglobal.com/binance",
+    notes: "Complies with emergency freeze directives via dedicated LEA portal within 45 minutes."
+  },
+  {
+    id: "coindcx",
+    name: "CoinDCX India",
+    entity: "Neblio Technologies Private Limited",
+    fiu: "FIU-IND-2023-014",
+    email: "nodal-lea@coindcx.com",
+    phone: "+91 80-6893-7700",
+    sla: "< 2 Hours",
+    type: "DOMESTIC",
+    status: "Domestic FIU Registered",
+    office: "Godrej BKC, Bandra Kurla Complex, Mumbai",
+    notes: "Registered Indian entity with statutory compliance officer on duty 24/7."
+  },
+  {
+    id: "wazirx",
+    name: "WazirX India",
+    entity: "Zanmai Labs Private Limited",
+    fiu: "FIU-IND-2023-009",
+    email: "lawenforcement@wazirx.com",
+    phone: "+91 22-6844-9000",
+    sla: "< 2 Hours",
+    type: "DOMESTIC",
+    status: "Domestic FIU Registered",
+    office: "Kanakia Wall Street, Andheri East, Mumbai",
+    notes: "Direct compliance desk with Section 94 BNSS digital processing unit."
+  },
+  {
+    id: "coinswitch",
+    name: "CoinSwitch Kuber",
+    entity: "Bitcipher Labs LLP",
+    fiu: "FIU-IND-2023-021",
+    email: "legal-lea@coinswitch.co",
+    phone: "+91 80-4568-1200",
+    sla: "< 2 Hours",
+    type: "DOMESTIC",
+    status: "Domestic FIU Registered",
+    office: "Bellandur Outer Ring Road, Bengaluru",
+    notes: "Instant API freeze capability for Indian state Cyber Crime Cells."
+  },
+  {
+    id: "mudrex",
+    name: "Mudrex",
+    entity: "Bitspay Technologies Private Limited",
+    fiu: "FIU-IND-2023-033",
+    email: "compliance@mudrex.com",
+    phone: "+91 80-4718-9090",
+    sla: "< 2 Hours",
+    type: "DOMESTIC",
+    status: "Domestic FIU Registered",
+    office: "HSR Layout Sector 1, Bengaluru",
+    notes: "Designated Indian Compliance Officer registered under PMLA guidelines."
+  },
+  {
+    id: "kraken",
+    name: "Kraken Exchange",
+    entity: "Payward, Inc. (San Francisco, USA)",
+    fiu: "US FinCEN MSB #31000136371793",
+    email: "compliance@kraken.com",
+    sla: "< 4 Hours",
+    type: "GLOBAL",
+    status: "International Exchange",
+    portal: "https://www.kraken.com/legal/law-enforcement",
+    notes: "Honors Section 94 BNSS preservation requests when delivered with NCRP FIR."
+  },
+  {
+    id: "okx",
+    name: "OKX Global",
+    entity: "Aux Cayes FinTech Co. Ltd",
+    fiu: "International Reporting VASP",
+    email: "enforcement@okx.com",
+    sla: "< 3 Hours",
+    type: "GLOBAL",
+    status: "International Exchange",
+    portal: "https://www.okx.com/law-enforcement",
+    notes: "24/7 international compliance desk for urgent court orders and seizure mandates."
+  },
+  {
+    id: "kucoin",
+    name: "KuCoin",
+    entity: "PheonixFin Pte. Ltd.",
+    fiu: "International Reporting Entity",
+    email: "compliance@kucoin.com",
+    sla: "< 4 Hours",
+    type: "GLOBAL",
+    status: "International Exchange",
+    portal: "https://www.kucoin.com/land/law-enforcement",
+    notes: "Accepts digital law enforcement directives for debit-lock of accounts."
+  }
+];
+
+// ============================================================================
 // MAIN COMPONENT ARCHITECTURE
 // ============================================================================
 export default function App() {
@@ -238,8 +474,47 @@ export default function App() {
   // Accordion & Modal States
   const [isEvidenceExpanded, setIsEvidenceExpanded] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'bnss' | 'pdf' | 'ncrp' | null
-  const [copiedBadge, setCopiedBadge] = useState(null);
   const [toastMsg, setToastMsg] = useState(null);
+
+  // NCRP Vault State
+  const [vaultCases, setVaultCases] = useState(VAULT_CASES_INITIAL);
+  const [vaultSearch, setVaultSearch] = useState('');
+  const [vaultFilter, setVaultFilter] = useState('ALL'); // 'ALL' | 'CRITICAL' | 'HIGH'
+  const [vaultStateFilter, setVaultStateFilter] = useState('ALL'); // 'ALL' | 'Karnataka' | 'Telangana' | 'Delhi' | 'Maharashtra'
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [newCaseForm, setNewCaseForm] = useState({
+    ncrpId: '2026/NCRP/' + Math.floor(100000 + Math.random() * 900000),
+    firNumber: 'FIR-' + Math.floor(100 + Math.random() * 900) + '/2026',
+    station: 'Cyber Crime PS, Bengaluru',
+    state: 'Karnataka',
+    officer: 'Insp. R. Deshmukh',
+    crimeType: 'Part-Time Task Scam / Pig-Butchering',
+    suspectAddress: '',
+    network: 'Polygon',
+    amountCrypto: '20,000 USDT',
+    amountInr: '₹17,00,000',
+    targetVasp: 'Binance Global',
+    riskLevel: 'CRITICAL'
+  });
+
+  // VASP Directory State
+  const [vaspSearch, setVaspSearch] = useState('');
+  const [vaspFilter, setVaspFilter] = useState('ALL'); // 'ALL' | 'DOMESTIC' | 'GLOBAL'
+  const [selectedVaspForNotice, setSelectedVaspForNotice] = useState(null);
+
+  // Legal Statutory Desk State
+  const [statutoryTab, setStatutoryTab] = useState('templates'); // 'templates' | 'framework' | 'sop'
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState('bnss94');
+  const [legalNoticeForm, setLegalNoticeForm] = useState({
+    ioName: 'Insp. R. Deshmukh',
+    ioStation: 'Cyber Crime PS, Bengaluru',
+    caseFir: 'FIR-402/2026 (Cyber Crime PS, Bengaluru)',
+    ncrpId: '2026/NCRP/892110',
+    suspectAddr: '0xe6D6947c424AbbAB1C7b3866DC65614EEEC65358',
+    targetExchange: 'Binance Global',
+    vaspEmail: 'law-enforcement@binance.com',
+    amountSeized: '25,000 USDT (₹21,25,000 INR)'
+  });
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -414,11 +689,11 @@ export default function App() {
             
             {/* 1. New Trace */}
             <button
-              onClick={() => { setCurrentView('home'); setActiveNav('trace'); }}
+              onClick={() => { setActiveNav('trace'); setCurrentView('home'); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                activeNav === 'trace' && currentView === 'home'
+                activeNav === 'trace'
                   ? darkMode
-                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800'
+                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800 font-bold'
                     : 'bg-blue-50 text-blue-700 border border-blue-200 font-bold shadow-xs'
                   : darkMode
                     ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -431,11 +706,11 @@ export default function App() {
 
             {/* 2. Active Intelligence */}
             <button
-              onClick={() => { setCurrentView('results'); setActiveNav('intelligence'); }}
+              onClick={() => { setActiveNav('intelligence'); setCurrentView('results'); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                activeNav === 'intelligence' && currentView === 'results'
+                activeNav === 'intelligence'
                   ? darkMode
-                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800'
+                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800 font-bold'
                     : 'bg-blue-50 text-blue-700 border border-blue-200 font-bold shadow-xs'
                   : darkMode
                     ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -448,11 +723,11 @@ export default function App() {
 
             {/* 3. NCRP Case Vault */}
             <button
-              onClick={() => setActiveNav('vault')}
+              onClick={() => { setActiveNav('vault'); setCurrentView('vault'); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 activeNav === 'vault'
                   ? darkMode
-                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800'
+                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800 font-bold'
                     : 'bg-blue-50 text-blue-700 border border-blue-200 font-bold shadow-xs'
                   : darkMode
                     ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -465,11 +740,11 @@ export default function App() {
 
             {/* 4. VASP Nodal Directory */}
             <button
-              onClick={() => setActiveNav('directory')}
+              onClick={() => { setActiveNav('directory'); setCurrentView('directory'); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 activeNav === 'directory'
                   ? darkMode
-                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800'
+                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800 font-bold'
                     : 'bg-blue-50 text-blue-700 border border-blue-200 font-bold shadow-xs'
                   : darkMode
                     ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -482,11 +757,11 @@ export default function App() {
 
             {/* 5. Legal Statutory Desk */}
             <button
-              onClick={() => setActiveNav('statutory')}
+              onClick={() => { setActiveNav('statutory'); setCurrentView('statutory'); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 activeNav === 'statutory'
                   ? darkMode
-                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800'
+                    ? 'bg-blue-950/50 text-blue-300 border border-blue-800 font-bold'
                     : 'bg-blue-50 text-blue-700 border border-blue-200 font-bold shadow-xs'
                   : darkMode
                     ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -523,7 +798,7 @@ export default function App() {
           {/* ================================================================ */}
           {/* SCREEN 1: SEARCH & INGESTION VIEW ("Google-Search Simplicity")     */}
           {/* ================================================================ */}
-          {currentView === 'home' && activeNav === 'trace' && (
+          {activeNav === 'trace' && (
             <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 max-w-4xl mx-auto w-full">
               
               {/* Header Title with High Contrast */}
@@ -725,7 +1000,7 @@ export default function App() {
           {/* ================================================================ */}
           {/* SCREEN 2: TRACE RESULTS & ACTION DASHBOARD                        */}
           {/* ================================================================ */}
-          {currentView === 'results' && (
+          {activeNav === 'intelligence' && (
             <div className="p-4 sm:p-8 max-w-6xl mx-auto w-full space-y-6">
               
               {/* Back to Search Nav */}
@@ -733,7 +1008,7 @@ export default function App() {
                 darkMode ? 'border-slate-800' : 'border-slate-200'
               }`}>
                 <button
-                  onClick={() => setCurrentView('home')}
+                  onClick={() => { setActiveNav('trace'); setCurrentView('home'); }}
                   className="inline-flex items-center gap-2 text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -1222,59 +1497,313 @@ export default function App() {
           )}
 
           {/* ================================================================ */}
+          {/* ================================================================ */}
           {/* VIEW: NCRP CASE VAULT                                             */}
           {/* ================================================================ */}
           {activeNav === 'vault' && (
-            <div className="p-6 sm:p-10 max-w-6xl mx-auto w-full space-y-6">
-              <div className={`flex items-center justify-between border-b pb-4 ${
+            <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+              
+              {/* Header & Ingestion CTA */}
+              <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5 ${
                 darkMode ? 'border-slate-800' : 'border-slate-200'
               }`}>
                 <div>
-                  <h2 className={`text-2xl font-black tracking-tight flex items-center gap-2 ${
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      I4C Synchronized Gateway
+                    </span>
+                    <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                      Real-Time Sync Active
+                    </span>
+                  </div>
+                  <h2 className={`text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5 mt-1.5 ${
                     darkMode ? 'text-white' : 'text-slate-900'
                   }`}>
-                    <FolderLock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    <span>NCRP Case Vault // Active Police Docket</span>
+                    <FolderLock className="w-7 h-7 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <span>NCRP Case Vault & Active Police Dockets</span>
                   </h2>
-                  <p className={`text-xs mt-0.5 ${
+                  <p className={`text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed ${
                     darkMode ? 'text-slate-400' : 'text-slate-600'
                   }`}>
-                    Centralized cyber fraud repository synchronized with state police units.
+                    Central repository of citizen-reported crypto fraud cases under the National Cybercrime Reporting Portal. Direct linkage to live attribution and statutory debit-freezes.
                   </p>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => setIsRegisterModalOpen(true)}
+                    className="px-4 py-2.5 rounded-xl font-bold text-xs bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-2 shadow-sm transition cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Ingest New NCRP Complaint</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {Object.entries(DEMO_CASES).map(([key, item]) => (
-                  <div key={key} className={`rounded-xl border p-5 space-y-3 shadow-sm ${
-                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold text-blue-700 dark:text-blue-400">{item.caseInfo.ncrpId}</span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300">
-                        {item.caseInfo.riskLevel}
-                      </span>
-                    </div>
-                    <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.caseInfo.firNumber}</h3>
-                    <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{item.caseInfo.crimeType}</p>
-                    <div className={`pt-2 border-t flex items-center justify-between text-xs ${
-                      darkMode ? 'border-slate-800' : 'border-slate-100'
-                    }`}>
-                      <span className="font-bold text-emerald-600 font-mono">{item.caseInfo.totalValueInr}</span>
-                      <button
-                        onClick={() => {
-                          setActiveCaseKey(key);
-                          setCurrentView('results');
-                          setActiveNav('intelligence');
-                          showToast(`Loaded ${item.caseInfo.ncrpId} into Attribution Desk.`);
-                        }}
-                        className="px-3 py-1.5 rounded-lg font-bold text-xs bg-blue-700 hover:bg-blue-800 text-white cursor-pointer"
-                      >
-                        Open Docket
-                      </button>
-                    </div>
+              {/* High-Level Statistics Bar */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className={`p-4 rounded-xl border space-y-1 ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xs'
+                }`}>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Dockets</div>
+                  <div className={`text-2xl font-black font-mono ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {vaultCases.length} Cases
                   </div>
-                ))}
+                  <div className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">Synchronized with State Cyber PS</div>
+                </div>
+
+                <div className={`p-4 rounded-xl border space-y-1 ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xs'
+                }`}>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Defrauded Virtual Assets</div>
+                  <div className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+                    ₹2.60 Cr
+                  </div>
+                  <div className="text-[11px] text-slate-500 font-mono">~3,05,500 USDT Equivalent</div>
+                </div>
+
+                <div className={`p-4 rounded-xl border space-y-1 ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xs'
+                }`}>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Recoverable Target Funds</div>
+                  <div className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400">
+                    ₹1.95 Cr
+                  </div>
+                  <div className="text-[11px] text-emerald-600 font-semibold">75% Traced to VASP Hot Wallets</div>
+                </div>
+
+                <div className={`p-4 rounded-xl border space-y-1 ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xs'
+                }`}>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Section 94 BNSS Orders</div>
+                  <div className={`text-2xl font-black font-mono ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    5 Dispatched
+                  </div>
+                  <div className="text-[11px] text-purple-600 dark:text-purple-400 font-medium">Compliance SLA: &lt; 2 Hours</div>
+                </div>
+              </div>
+
+              {/* Search & Filter Toolbar */}
+              <div className={`p-4 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-3 ${
+                darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xs'
+              }`}>
+                {/* Search Input */}
+                <div className="relative w-full md:w-96">
+                  <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={vaultSearch}
+                    onChange={(e) => setVaultSearch(e.target.value)}
+                    placeholder="Search by NCRP ID, FIR, Wallet, or IO..."
+                    className={`w-full pl-9 pr-8 py-2 rounded-lg text-xs font-mono border focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                      darkMode ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                    }`}
+                  />
+                  {vaultSearch && (
+                    <button
+                      onClick={() => setVaultSearch('')}
+                      className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Controls */}
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                  <div className="flex items-center gap-1 text-xs">
+                    {['ALL', 'CRITICAL', 'HIGH'].map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setVaultFilter(f)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          vaultFilter === f
+                            ? 'bg-blue-700 text-white'
+                            : darkMode
+                              ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {f === 'ALL' ? 'All Risk' : f}
+                      </button>
+                    ))}
+                  </div>
+
+                  <select
+                    value={vaultStateFilter}
+                    onChange={(e) => setVaultStateFilter(e.target.value)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border cursor-pointer ${
+                      darkMode ? 'bg-slate-800 border-slate-700 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-800'
+                    }`}
+                  >
+                    <option value="ALL">All Jurisdictions</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Gujarat">Gujarat</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Cases Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {vaultCases
+                  .filter((c) => {
+                    const q = vaultSearch.toLowerCase();
+                    const matchesSearch = !q ||
+                      c.ncrpId.toLowerCase().includes(q) ||
+                      c.firNumber.toLowerCase().includes(q) ||
+                      c.suspectAddress.toLowerCase().includes(q) ||
+                      c.station.toLowerCase().includes(q) ||
+                      c.officer.toLowerCase().includes(q) ||
+                      c.crimeType.toLowerCase().includes(q);
+                    const matchesRisk = vaultFilter === 'ALL' || c.riskLevel === vaultFilter;
+                    const matchesState = vaultStateFilter === 'ALL' || c.state === vaultStateFilter;
+                    return matchesSearch && matchesRisk && matchesState;
+                  })
+                  .map((c) => (
+                    <div
+                      key={c.id}
+                      className={`rounded-2xl border p-5 space-y-4 shadow-xs flex flex-col justify-between transition hover:shadow-md ${
+                        darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        {/* Top Metadata */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs font-extrabold text-blue-700 dark:text-blue-400">
+                              {c.ncrpId}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(c.ncrpId, 'NCRP ID')}
+                              className="p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              title="Copy NCRP ID"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              c.riskLevel === 'CRITICAL'
+                                ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900'
+                                : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900'
+                            }`}>
+                              {c.riskLevel}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              {c.network}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Title & Station */}
+                        <div>
+                          <h3 className={`font-bold text-sm leading-snug ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                            {c.firNumber}
+                          </h3>
+                          <div className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {c.station} • <span className="font-medium">{c.officer}</span>
+                          </div>
+                        </div>
+
+                        {/* Crime description */}
+                        <div className={`p-2.5 rounded-lg text-xs leading-relaxed ${
+                          darkMode ? 'bg-slate-950 text-slate-300 border border-slate-800' : 'bg-slate-50 text-slate-700 border border-slate-200'
+                        }`}>
+                          <span className="font-semibold text-blue-600 dark:text-blue-400">Classification: </span>
+                          {c.crimeType}
+                        </div>
+
+                        {/* Suspect Address Bar */}
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                            Suspect Ingestion Wallet
+                          </div>
+                          <div className={`flex items-center justify-between p-2 rounded-lg font-mono text-[11px] border ${
+                            darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-800'
+                          }`}>
+                            <span className="truncate max-w-[200px]" title={c.suspectAddress}>
+                              {c.suspectAddress}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(c.suspectAddress, 'Wallet Address')}
+                              className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition cursor-pointer text-slate-400 hover:text-slate-600"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Amounts & Target VASP */}
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold text-slate-500">Loss / Seizure Sum</div>
+                            <div className="font-extrabold text-sm text-emerald-600 dark:text-emerald-400 font-mono">
+                              {c.amountInr}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">{c.amountCrypto}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[10px] font-semibold text-slate-500">Destination VASP</div>
+                            <div className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                              {c.targetVasp}
+                            </div>
+                            <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium truncate max-w-[140px]">
+                              {c.status.split('(')[0]}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                        <button
+                          onClick={() => {
+                            if (c.key && DEMO_CASES[c.key]) {
+                              setActiveCaseKey(c.key);
+                            } else {
+                              setActiveCaseKey('polygon');
+                            }
+                            setInputAddress(c.suspectAddress);
+                            setNcrpInput(c.ncrpId);
+                            setActiveNav('intelligence');
+                            setCurrentView('results');
+                            setSelectedNode(null);
+                            showToast(`Loaded ${c.ncrpId} into Attribution Desk.`);
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-blue-700 hover:bg-blue-800 text-white flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
+                        >
+                          <span>⚡ Trace Docket in Real-Time</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedVaspForNotice({ name: c.targetVasp, email: c.vaspEmail });
+                              setActiveModal('bnss');
+                            }}
+                            className={`py-1.5 px-2 rounded-lg font-semibold text-[11px] border text-center transition cursor-pointer ${
+                              darkMode ? 'border-red-900/60 text-red-400 hover:bg-red-950/40' : 'border-red-200 text-red-700 hover:bg-red-50'
+                            }`}
+                          >
+                            Sec 94 Freeze
+                          </button>
+                          <button
+                            onClick={() => setActiveModal('pdf')}
+                            className={`py-1.5 px-2 rounded-lg font-semibold text-[11px] border text-center transition cursor-pointer ${
+                              darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            Court PDF (BSA)
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           )}
@@ -1283,50 +1812,222 @@ export default function App() {
           {/* VIEW: VASP NODAL DIRECTORY                                        */}
           {/* ================================================================ */}
           {activeNav === 'directory' && (
-            <div className="p-6 sm:p-10 max-w-6xl mx-auto w-full space-y-6">
-              <div className={`border-b pb-4 ${
+            <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+              
+              {/* Header */}
+              <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5 ${
                 darkMode ? 'border-slate-800' : 'border-slate-200'
               }`}>
-                <h2 className={`text-2xl font-black tracking-tight flex items-center gap-2 ${
-                  darkMode ? 'text-white' : 'text-slate-900'
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      FIU-IND Verified Registry
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      PMLA Rule 3 Statutory Framework
+                    </span>
+                  </div>
+                  <h2 className={`text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5 mt-1.5 ${
+                    darkMode ? 'text-white' : 'text-slate-900'
+                  }`}>
+                    <Building2 className="w-7 h-7 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <span>VASP Nodal Law Enforcement Directory</span>
+                  </h2>
+                  <p className={`text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed ${
+                    darkMode ? 'text-slate-400' : 'text-slate-600'
+                  }`}>
+                    Official directory of 24/7 designated compliance officers, corporate entities, and nodal channels for cryptocurrency asset freezing under Section 94 BNSS 2023.
+                  </p>
+                </div>
+
+                <div className={`p-3 rounded-xl border text-xs space-y-1 max-w-xs ${
+                  darkMode ? 'bg-red-950/30 border-red-900/60 text-red-300' : 'bg-red-50 border-red-200 text-red-800'
                 }`}>
-                  <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  <span>VASP Nodal Law Enforcement Directory</span>
-                </h2>
-                <p className={`text-xs mt-0.5 ${
-                  darkMode ? 'text-slate-400' : 'text-slate-600'
-                }`}>
-                  Verified 24/7 law enforcement points of contact for cryptocurrency asset freeze directives.
-                </p>
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    <span>Statutory 4-Hour Mandate</span>
+                  </div>
+                  <p className="text-[11px] leading-tight">
+                    Under Section 94 BNSS, registered VASPs are legally bound to acknowledge and freeze accounts within 4 hours.
+                  </p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { name: "Binance Global", email: "law-enforcement@binance.com", fiu: "FIU-2023-VASP-88", time: "< 45 Mins", status: "Global Reporting Entity" },
-                  { name: "CoinDCX India (Neblio Technologies)", email: "nodal-lea@coindcx.com", fiu: "FIU-IND-2023-014", time: "< 2 Hours", status: "Domestic FIU Registered" },
-                  { name: "WazirX India (Zanmai Labs)", email: "lawenforcement@wazirx.com", fiu: "FIU-IND-2023-009", time: "< 2 Hours", status: "Domestic FIU Registered" },
-                  { name: "CoinSwitch Kuber (Bitcipher Labs)", email: "legal-lea@coinswitch.co", fiu: "FIU-IND-2023-021", time: "< 2 Hours", status: "Domestic FIU Registered" },
-                  { name: "Mudrex (Bitspay)", email: "compliance@mudrex.com", fiu: "FIU-IND-2023-033", time: "< 2 Hours", status: "Domestic FIU Registered" },
-                  { name: "Kraken Exchange", email: "compliance@kraken.com", fiu: "US FinCEN Registered", time: "< 4 Hours", status: "International Exchange" }
-                ].map((vasp, i) => (
-                  <div key={i} className={`p-4 rounded-xl border space-y-2 ${
-                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                  }`}>
-                    <div className="flex items-center justify-between">
-                      <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>{vasp.name}</h3>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
-                        {vasp.time} SLA
-                      </span>
+              {/* Search & Filter Toolbar */}
+              <div className={`p-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${
+                darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-2xs'
+              }`}>
+                {/* Search */}
+                <div className="relative w-full sm:w-96">
+                  <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={vaspSearch}
+                    onChange={(e) => setVaspSearch(e.target.value)}
+                    placeholder="Search VASP name, legal entity, or email..."
+                    className={`w-full pl-9 pr-8 py-2 rounded-lg text-xs font-mono border focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                      darkMode ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                    }`}
+                  />
+                  {vaspSearch && (
+                    <button
+                      onClick={() => setVaspSearch('')}
+                      className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Tabs */}
+                <div className="flex items-center gap-1 text-xs w-full sm:w-auto">
+                  {[
+                    { id: 'ALL', label: 'All Exchanges (8)' },
+                    { id: 'DOMESTIC', label: 'Domestic FIU-IND (4)' },
+                    { id: 'GLOBAL', label: 'Global Reporting (4)' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setVaspFilter(tab.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        vaspFilter === tab.id
+                          ? 'bg-blue-700 text-white shadow-xs'
+                          : darkMode
+                            ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* VASP Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {VASP_DIRECTORY_DATA
+                  .filter((v) => {
+                    const q = vaspSearch.toLowerCase();
+                    const matchesSearch = !q ||
+                      v.name.toLowerCase().includes(q) ||
+                      v.entity.toLowerCase().includes(q) ||
+                      v.email.toLowerCase().includes(q) ||
+                      v.fiu.toLowerCase().includes(q);
+                    const matchesFilter = vaspFilter === 'ALL' || v.type === vaspFilter;
+                    return matchesSearch && matchesFilter;
+                  })
+                  .map((vasp) => (
+                    <div
+                      key={vasp.id}
+                      className={`rounded-2xl border p-5 space-y-4 shadow-xs flex flex-col justify-between transition hover:shadow-md ${
+                        darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        {/* Header: Title + Badges */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className={`font-black text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                {vasp.name}
+                              </h3>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                vasp.type === 'DOMESTIC'
+                                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                                  : 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
+                              }`}>
+                                {vasp.type === 'DOMESTIC' ? 'Domestic FIU' : 'Global'}
+                              </span>
+                            </div>
+                            <div className={`text-xs mt-0.5 font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              {vasp.entity}
+                            </div>
+                          </div>
+
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 whitespace-nowrap">
+                            ⚡ {vasp.sla} SLA
+                          </span>
+                        </div>
+
+                        {/* Registration ID & Notes */}
+                        <div className={`p-3 rounded-xl border text-xs space-y-2 ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-500 text-[11px]">FIU / Reg ID:</span>
+                            <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{vasp.fiu}</span>
+                          </div>
+                          {vasp.office && (
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-semibold text-slate-500">Registered Office:</span>
+                              <span className="text-right truncate max-w-[220px]">{vasp.office}</span>
+                            </div>
+                          )}
+                          {vasp.phone && (
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="font-semibold text-slate-500">Nodal Phone:</span>
+                              <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{vasp.phone}</span>
+                            </div>
+                          )}
+                          <p className="text-[11px] leading-relaxed italic text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-1.5 mt-1.5">
+                            "{vasp.notes}"
+                          </p>
+                        </div>
+
+                        {/* 24/7 Verified Nodal Email */}
+                        <div className="space-y-1">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                            24/7 Law Enforcement Nodal Email
+                          </div>
+                          <div className={`flex items-center justify-between p-2.5 rounded-xl font-mono text-xs border ${
+                            darkMode ? 'bg-slate-950 border-slate-800 text-blue-400' : 'bg-blue-50/50 border-blue-200 text-blue-700'
+                          }`}>
+                            <div className="flex items-center gap-2 truncate">
+                              <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="truncate">{vasp.email}</span>
+                            </div>
+                            <button
+                              onClick={() => copyToClipboard(vasp.email, vasp.name + ' Nodal Email')}
+                              className="px-2 py-1 rounded text-[11px] font-bold bg-blue-700 hover:bg-blue-800 text-white cursor-pointer transition flex items-center gap-1 flex-shrink-0"
+                            >
+                              <Copy className="w-3 h-3" />
+                              <span>Copy</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Footer */}
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
+                        <button
+                          onClick={() => {
+                            setSelectedVaspForNotice({ name: vasp.name, email: vasp.email });
+                            setActiveModal('bnss');
+                            showToast(`Prepared Section 94 Notice for ${vasp.name}`);
+                          }}
+                          className="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
+                        >
+                          <Gavel className="w-3.5 h-3.5" />
+                          <span>Issue Section 94 Notice</span>
+                        </button>
+
+                        {vasp.portal && (
+                          <a
+                            href={vasp.portal}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                              darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                            }`}
+                            title="Open Official Law Enforcement Portal"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">LEA Portal</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-xs font-mono text-blue-600 dark:text-blue-400">{vasp.email}</div>
-                    <div className={`text-[11px] flex items-center justify-between pt-2 border-t ${
-                      darkMode ? 'text-slate-400 border-slate-800' : 'text-slate-500 border-slate-100'
-                    }`}>
-                      <span>Status: {vasp.status}</span>
-                      <span className="font-mono">{vasp.fiu}</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           )}
@@ -1335,70 +2036,463 @@ export default function App() {
           {/* VIEW: LEGAL STATUTORY DESK                                       */}
           {/* ================================================================ */}
           {activeNav === 'statutory' && (
-            <div className="p-6 sm:p-10 max-w-6xl mx-auto w-full space-y-6">
-              <div className={`border-b pb-4 ${
+            <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+              
+              {/* Header */}
+              <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5 ${
                 darkMode ? 'border-slate-800' : 'border-slate-200'
               }`}>
-                <h2 className={`text-2xl font-black tracking-tight flex items-center gap-2 ${
-                  darkMode ? 'text-white' : 'text-slate-900'
-                }`}>
-                  <Gavel className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  <span>Legal Statutory Desk // Bharatiya Sakshya Adhiniyam & BNSS 2023</span>
-                </h2>
-                <p className={`text-xs mt-0.5 ${
-                  darkMode ? 'text-slate-400' : 'text-slate-600'
-                }`}>
-                  Standard operating procedures and statutory compliance mandates for digital asset seizure.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`p-6 rounded-xl border space-y-3 ${
-                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <h3 className={`font-bold text-sm flex items-center gap-2 ${
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                      Bharatiya Nagarik Suraksha Sanhita & BSA 2023
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      Standard Operating Procedures
+                    </span>
+                  </div>
+                  <h2 className={`text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5 mt-1.5 ${
                     darkMode ? 'text-white' : 'text-slate-900'
                   }`}>
-                    <Scale className="w-4 h-4 text-blue-600" />
-                    <span>Section 94 BNSS 2023 (Former Sec 91 Cr.P.C.)</span>
-                  </h3>
-                  <p className={`text-xs leading-relaxed ${
-                    darkMode ? 'text-slate-300' : 'text-slate-600'
-                  }`}>
-                    Empowers Investigating Officers to compel any entity operating in Indian sovereign space to immediately produce digital evidence or freeze property linked to criminal complaints.
-                  </p>
-                  <ul className={`text-xs space-y-1.5 list-disc pl-4 font-sans ${
+                    <Gavel className="w-7 h-7 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <span>Legal Statutory Desk & Notice Generator</span>
+                  </h2>
+                  <p className={`text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed ${
                     darkMode ? 'text-slate-400' : 'text-slate-600'
                   }`}>
-                    <li>Mandatory 4-hour freeze deadline upon formal digital delivery.</li>
-                    <li>Failure to comply triggers penal liability under Section 223 BNS.</li>
-                    <li>Direct applicability to all FIU-IND reporting VASPs.</li>
-                  </ul>
+                    Digital notice dispatch, cryptographic evidence certification under Section 63 BSA, and statutory SOPs for Investigating Officers seizing crypto fraud proceeds.
+                  </p>
                 </div>
 
-                <div className={`p-6 rounded-xl border space-y-3 ${
-                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                }`}>
-                  <h3 className={`font-bold text-sm flex items-center gap-2 ${
-                    darkMode ? 'text-white' : 'text-slate-900'
-                  }`}>
-                    <FileText className="w-4 h-4 text-emerald-600" />
-                    <span>Section 63 BSA 2023 (Former Sec 65B IEA)</span>
-                  </h3>
-                  <p className={`text-xs leading-relaxed ${
-                    darkMode ? 'text-slate-300' : 'text-slate-600'
-                  }`}>
-                    Governs the admissibility of electronic records in judicial proceedings without needing physical server equipment brought to court.
-                  </p>
-                  <ul className={`text-xs space-y-1.5 list-disc pl-4 font-sans ${
-                    darkMode ? 'text-slate-400' : 'text-slate-600'
-                  }`}>
-                    <li>Requires cryptographic SHA-256 hash verification.</li>
-                    <li>Timestamped certified docket signed by investigating officer.</li>
-                    <li>Chain of custody logs from node query to PDF generation.</li>
-                  </ul>
+                {/* Statutory Tab Switcher */}
+                <div className="flex items-center gap-1.5 p-1 rounded-xl border bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-xs font-bold">
+                  {[
+                    { id: 'templates', label: 'Notice Generator', icon: FileText },
+                    { id: 'framework', label: 'Legal Framework', icon: Scale },
+                    { id: 'sop', label: 'Police IO SOP', icon: ShieldCheck }
+                  ].map((tab) => {
+                    const IconComp = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setStatutoryTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition cursor-pointer ${
+                          statutoryTab === tab.id
+                            ? 'bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <IconComp className="w-3.5 h-3.5" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              {/* TAB 1: INTERACTIVE NOTICE GENERATOR */}
+              {statutoryTab === 'templates' && (
+                <div className="space-y-6">
+                  {/* Template Selection Pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: 'bnss94', title: 'Section 94 BNSS Emergency Debit-Freeze Directive', law: 'Former Sec 91 Cr.P.C.' },
+                      { id: 'bsa63', title: 'Section 63 BSA Certificate of Electronic Records', law: 'Former Sec 65B Evidence Act' },
+                      { id: 'kyc', title: 'VASP Customer KYC & Geolocation IP Requisition', law: 'Rule 3 PMLA 2002' },
+                      { id: 'bank', title: 'Section 106 BNSS P2P Bank Account Freeze Requisition', law: 'Former Sec 102 Cr.P.C.' }
+                    ].map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelectedTemplateKey(t.id)}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer flex flex-col items-start ${
+                          selectedTemplateKey === t.id
+                            ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
+                            : darkMode
+                              ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="font-bold">{t.title}</span>
+                        <span className={`text-[10px] ${selectedTemplateKey === t.id ? 'text-blue-200' : 'text-slate-400'}`}>
+                          {t.law}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Two-Column Editor & Live Government Preview */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left: Interactive Field Customizer */}
+                    <div className={`lg:col-span-5 rounded-2xl border p-5 space-y-4 ${
+                      darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
+                    }`}>
+                      <h3 className={`font-bold text-sm border-b pb-2 flex items-center justify-between ${
+                        darkMode ? 'text-white border-slate-800' : 'text-slate-900 border-slate-200'
+                      }`}>
+                        <span>Customize Notice Particulars</span>
+                        <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 uppercase">Live Form</span>
+                      </h3>
+
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <label className="block font-semibold mb-1 text-slate-500">Investigating Officer (IO)</label>
+                          <input
+                            type="text"
+                            value={legalNoticeForm.ioName}
+                            onChange={(e) => setLegalNoticeForm({ ...legalNoticeForm, ioName: e.target.value })}
+                            className={`w-full p-2 rounded-lg border font-mono ${
+                              darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold mb-1 text-slate-500">Police Station & Unit</label>
+                          <input
+                            type="text"
+                            value={legalNoticeForm.ioStation}
+                            onChange={(e) => setLegalNoticeForm({ ...legalNoticeForm, ioStation: e.target.value })}
+                            className={`w-full p-2 rounded-lg border font-mono ${
+                              darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold mb-1 text-slate-500">FIR & NCRP Case Reference</label>
+                          <input
+                            type="text"
+                            value={legalNoticeForm.caseFir}
+                            onChange={(e) => setLegalNoticeForm({ ...legalNoticeForm, caseFir: e.target.value })}
+                            className={`w-full p-2 rounded-lg border font-mono ${
+                              darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold mb-1 text-slate-500">Destination Cryptocurrency VASP</label>
+                          <input
+                            type="text"
+                            value={legalNoticeForm.targetExchange}
+                            onChange={(e) => setLegalNoticeForm({ ...legalNoticeForm, targetExchange: e.target.value })}
+                            className={`w-full p-2 rounded-lg border font-mono ${
+                              darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold mb-1 text-slate-500">Suspect Wallet Address</label>
+                          <input
+                            type="text"
+                            value={legalNoticeForm.suspectAddr}
+                            onChange={(e) => setLegalNoticeForm({ ...legalNoticeForm, suspectAddr: e.target.value })}
+                            className={`w-full p-2 rounded-lg border font-mono ${
+                              darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block font-semibold mb-1 text-slate-500">Defrauded Seizure Value</label>
+                          <input
+                            type="text"
+                            value={legalNoticeForm.amountSeized}
+                            onChange={(e) => setLegalNoticeForm({ ...legalNoticeForm, amountSeized: e.target.value })}
+                            className={`w-full p-2 rounded-lg border font-mono ${
+                              darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Live Official Document Preview */}
+                    <div className={`lg:col-span-7 rounded-2xl border p-6 space-y-4 flex flex-col justify-between ${
+                      darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
+                    }`}>
+                      <div className="space-y-4">
+                        {/* Action Toolbar */}
+                        <div className="flex items-center justify-between border-b pb-3">
+                          <div className="flex items-center gap-2">
+                            <Scale className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            <span className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                              Official Gazette Format // Form BNSS-94/CR
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                const textToCopy = `NOTICE UNDER SECTION 94 BNSS, 2023\nTO: Compliance Officer, ${legalNoticeForm.targetExchange}\nFROM: ${legalNoticeForm.ioName}, ${legalNoticeForm.ioStation}\nREF: ${legalNoticeForm.caseFir}\nSUBJECT: IMMEDIATE 4-HOUR DEBIT-FREEZE OF CRYPTOCURRENCY ASSETS (${legalNoticeForm.amountSeized})\nSUSPECT WALLET: ${legalNoticeForm.suspectAddr}\n\nYou are hereby directed under Section 94 of Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023 read with PMLA Regulations to immediately debit-lock and freeze all withdrawals on the destination account holding the traced funds. Disobedience attracts penal liabilities under Section 223 BNS.`;
+                                copyToClipboard(textToCopy, 'Statutory Notice Draft');
+                              }}
+                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-1.5 cursor-pointer shadow-xs"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy Notice</span>
+                            </button>
+                            <button
+                              onClick={() => showToast('Printing/Saving formal PDF draft...')}
+                              className={`p-2 rounded-lg border text-xs cursor-pointer ${
+                                darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                              }`}
+                              title="Print Notice"
+                            >
+                              <Printer className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Formal Legal Document Container */}
+                        <div className={`p-6 rounded-xl border font-serif text-xs leading-relaxed space-y-4 max-h-[460px] overflow-y-auto ${
+                          darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-amber-50/20 border-amber-200/60 text-slate-900'
+                        }`}>
+                          {/* Government Header */}
+                          <div className="text-center space-y-1 border-b pb-3">
+                            <div className="font-sans font-extrabold text-[11px] uppercase tracking-widest text-slate-500">
+                              GOVERNMENT OF INDIA • MINISTRY OF HOME AFFAIRS
+                            </div>
+                            <div className="font-bold text-sm tracking-wide">
+                              OFFICE OF THE INVESTIGATING OFFICER
+                            </div>
+                            <div className="text-[11px] font-sans text-slate-500">
+                              {legalNoticeForm.ioStation}
+                            </div>
+                            <div className="text-[10px] font-mono text-slate-400">
+                              STATUTORY DIRECTIVE REF: {legalNoticeForm.caseFir} • DATE: {new Date().toLocaleDateString('en-IN')}
+                            </div>
+                          </div>
+
+                          {/* Recipient & Subject */}
+                          <div className="space-y-1 font-sans text-xs">
+                            <div><strong>TO:</strong> Designated Nodal Compliance Officer, {legalNoticeForm.targetExchange}</div>
+                            <div><strong>FROM:</strong> {legalNoticeForm.ioName}, Investigating Officer, {legalNoticeForm.ioStation}</div>
+                            <div className="pt-2 font-bold text-red-600 dark:text-red-400">
+                              SUBJECT: MANDATORY 4-HOUR DEBIT-FREEZE ORDER UNDER SECTION 94 OF BHARATIYA NAGARIK SURAKSHA SANHITA (BNSS), 2023 REGARDING STOLEN CRYPTOCURRENCY ASSETS ({legalNoticeForm.amountSeized})
+                            </div>
+                          </div>
+
+                          {/* Statutory Body */}
+                          <div className="space-y-2.5 text-[11px] leading-relaxed">
+                            <p>
+                              1. WHEREAS, an active investigation has been instituted under <strong>{legalNoticeForm.caseFir}</strong> regarding cyber financial fraud, wherein virtual digital assets belonging to the victim citizen were coercively siphoned into suspect wallet address <code>{legalNoticeForm.suspectAddr}</code>.
+                            </p>
+                            <p>
+                              2. AND WHEREAS, autonomous blockchain forensic analytics verified by the National Cybercrime Threat Analytics Unit (NCTAU) confirms that said proceeds of crime have converged directly into custodial deposit accounts maintained by your exchange ({legalNoticeForm.targetExchange}).
+                            </p>
+                            <p>
+                              3. NOW THEREFORE, by virtue of statutory powers vested under <strong>Section 94 of Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023</strong> read with Section 12 of the Prevention of Money Laundering Act (PMLA), 2002, you are hereby ORDERED to:
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1 font-sans text-[11px]">
+                              <li><strong>Immediately apply a Debit-Lock / Withdrawal Freeze</strong> on the destination UID and wallet accounts holding funds transferred from {legalNoticeForm.suspectAddr}.</li>
+                              <li>Preserve complete blockchain transaction ledgers, deposit TXID receipts, and internal exchange UID account records for 180 days.</li>
+                              <li>Furnish certified KYC dossiers, registered mobile numbers, bank payout accounts, and IP access logs within four (4) hours of receipt.</li>
+                            </ul>
+                            <p className="text-red-600 dark:text-red-400 font-sans text-[11px] font-semibold">
+                              TAKE NOTICE: Willful non-compliance, concealment, or delay beyond the statutory 4-hour window will attract penal prosecution under Section 223 of Bharatiya Nyaya Sanhita (BNS), 2023 (Disobedience to order duly promulgated by public servant).
+                            </p>
+                          </div>
+
+                          {/* Official Signature & Hash Stamp */}
+                          <div className="pt-4 border-t border-dashed flex items-end justify-between font-sans text-[10px]">
+                            <div>
+                              <div className="font-mono text-emerald-600 font-bold">BSA SHA-256 SEAL:</div>
+                              <div className="font-mono text-slate-400 truncate max-w-[240px]">
+                                c78a992bc44e99f012b489d87c093a129ef9921b
+                              </div>
+                              <div className="text-slate-400 italic">Digitally certified under Section 63 BSA 2023</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-slate-800 dark:text-slate-200">{legalNoticeForm.ioName}</div>
+                              <div className="text-slate-500">Investigating Officer</div>
+                              <div className="text-slate-500">{legalNoticeForm.ioStation}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: STATUTORY LEGAL FRAMEWORK */}
+              {statutoryTab === 'framework' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className={`p-6 rounded-2xl border space-y-3.5 ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <Scale className="w-5 h-5 text-blue-600" />
+                      <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        Section 94 BNSS 2023 (Summons to Produce Document or Other Thing)
+                      </h3>
+                    </div>
+                    <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Replaces Section 91 of the repealed Code of Criminal Procedure (Cr.P.C.), 1973. Confers comprehensive legal authority on Police Station In-Charges and Investigating Officers to compel the production of digital records, transaction keys, or execute debit-freezes.
+                    </p>
+                    <div className={`p-3 rounded-xl text-xs space-y-1.5 font-sans ${
+                      darkMode ? 'bg-slate-950 text-slate-300 border border-slate-800' : 'bg-slate-50 text-slate-700 border border-slate-200'
+                    }`}>
+                      <div className="font-bold text-blue-600">Key Jurisprudential Tenets:</div>
+                      <ul className="list-disc pl-4 space-y-1 text-[11px]">
+                        <li>Directly binding on all FIU-IND registered VASPs and payment intermediaries.</li>
+                        <li>Extraterritorial reach: Applies to foreign exchanges catering to Indian residents.</li>
+                        <li>Establishes emergency 4-hour freezing imperative to prevent cross-border drain.</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className={`p-6 rounded-2xl border space-y-3.5 ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-emerald-600" />
+                      <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        Section 63 BSA 2023 (Admissibility of Electronic Records)
+                      </h3>
+                    </div>
+                    <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Replaces Section 65B of the repealed Indian Evidence Act (IEA), 1872. Sets statutory standards for admitting on-chain forensic evidence, blockchain explorer logs, and VASP deposit TXIDs before Judicial Magistrates.
+                    </p>
+                    <div className={`p-3 rounded-xl text-xs space-y-1.5 font-sans ${
+                      darkMode ? 'bg-slate-950 text-slate-300 border border-slate-800' : 'bg-slate-50 text-slate-700 border border-slate-200'
+                    }`}>
+                      <div className="font-bold text-emerald-600">Mandatory Evidentiary Safeguards:</div>
+                      <ul className="list-disc pl-4 space-y-1 text-[11px]">
+                        <li>Digital SHA-256 Hash stamping of all forensic trace dockets.</li>
+                        <li>Officer certification of automated node query integrity without physical server seizure.</li>
+                        <li>Unbroken chain of custody from suspect wallet ingestion to final exchange hot wallet.</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className={`p-6 rounded-2xl border space-y-3.5 ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-red-600" />
+                      <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        Section 223 BNS 2023 (Disobedience to Lawful Order of Public Servant)
+                      </h3>
+                    </div>
+                    <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Replaces Section 188 IPC. Prescribes rigorous criminal penal liability for corporate compliance officers, exchanges, or bank nodal managers who willfully ignore or delay Section 94 BNSS freeze directives.
+                    </p>
+                    <div className={`p-3 rounded-xl text-xs space-y-1.5 font-sans ${
+                      darkMode ? 'bg-slate-950 text-slate-300 border border-slate-800' : 'bg-slate-50 text-slate-700 border border-slate-200'
+                    }`}>
+                      <div className="font-bold text-red-600">Penal Consequences:</div>
+                      <ul className="list-disc pl-4 space-y-1 text-[11px]">
+                        <li>Simple imprisonment up to six (6) months, or fine, or both.</li>
+                        <li>If causing injury or endangering financial security: Imprisonment up to one (1) year.</li>
+                        <li>Grounds for immediate FIU-IND license suspension for habitual non-compliance.</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className={`p-6 rounded-2xl border space-y-3.5 ${
+                    darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <Landmark className="w-5 h-5 text-purple-600" />
+                      <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        PMLA 2002 & FIU-IND VASP Anti-Money Laundering Framework
+                      </h3>
+                    </div>
+                    <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Notification F.No. P-12011/12/2022-ES Cell-DOR mandates all entities facilitating crypto transfers to register as Reporting Entities and retain records for 5 years.
+                    </p>
+                    <div className={`p-3 rounded-xl text-xs space-y-1.5 font-sans ${
+                      darkMode ? 'bg-slate-950 text-slate-300 border border-slate-800' : 'bg-slate-50 text-slate-700 border border-slate-200'
+                    }`}>
+                      <div className="font-bold text-purple-600">Statutory Reporting Mandate:</div>
+                      <ul className="list-disc pl-4 space-y-1 text-[11px]">
+                        <li>Mandatory submission of Suspicious Transaction Reports (STRs) within 7 days.</li>
+                        <li>Automated Travel Rule compliance for crypto transactions exceeding ₹50,000.</li>
+                        <li>Designation of dedicated 24/7 Law Enforcement Nodal Officers.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: INVESTIGATING OFFICER (IO) SOP CHECKLIST */}
+              {statutoryTab === 'sop' && (
+                <div className={`rounded-2xl border p-6 space-y-6 ${
+                  darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
+                }`}>
+                  <div className="flex items-center justify-between border-b pb-3">
+                    <h3 className={`font-bold text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      Step-by-Step SOP Checklist for Crypto Crime Investigating Officers
+                    </h3>
+                    <span className="text-xs font-mono font-bold text-blue-600">I4C Standard Procedure</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {[
+                      {
+                        phase: "PHASE 1: 0 - 15 MINUTES",
+                        title: "Victim Ingestion & Transaction Verification",
+                        desc: "Verify victim citizen's bank statement, UPI reference, and victim crypto address. Confirm whether suspect address is EVM (0x), TRON (T), or Bitcoin (1/3/bc1). Ingest into Attribution Engine to verify live unspent balance.",
+                        status: "Mandatory First Step"
+                      },
+                      {
+                        phase: "PHASE 2: 15 - 30 MINUTES",
+                        title: "Automated Hop-Trace & Destination VASP Identification",
+                        desc: "Execute multi-hop traversal to cut through transit mules, burner sweep contracts, and cross-chain bridges. Identify the centralized exchange hot wallet where funds have converged.",
+                        status: "Attribution Engine Automated"
+                      },
+                      {
+                        phase: "PHASE 3: 30 - 60 MINUTES",
+                        title: "Dispatch Section 94 BNSS Emergency Freeze Notice",
+                        desc: "Transmit official Section 94 BNSS Notice with FIR details and transaction hashes directly to the VASP's verified nodal email from the VASP Directory. Mark notice URGENT 4-HOUR SLA.",
+                        status: "Statutory Directive"
+                      },
+                      {
+                        phase: "PHASE 4: 1 - 4 HOURS",
+                        title: "Requisition of KYC, IP Logs, and Bank Payout Channels",
+                        desc: "Compel the exchange to furnish customer KYC particulars (Aadhaar/PAN/Passport), registered mobile, signup IP geolocation, and linked bank accounts to trace off-ramp cash-out syndicates.",
+                        status: "KYC Extraction"
+                      },
+                      {
+                        phase: "PHASE 5: 4 - 24 HOURS",
+                        title: "Judicial Certification under Section 63 BSA 2023",
+                        desc: "Generate the SHA-256 sealed Section 63 BSA Certificate from the Evidence Vault. Submit certified docket before the jurisdictional Magistrate to formalize asset seizure into state custody.",
+                        status: "Court Production Ready"
+                      }
+                    ].map((step, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-xl border flex items-start gap-4 ${
+                          darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-blue-700 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400">
+                              {step.phase}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                              {step.status}
+                            </span>
+                          </div>
+                          <h4 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                            {step.title}
+                          </h4>
+                          <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            {step.desc}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
 
@@ -1423,14 +2517,19 @@ export default function App() {
                 <Gavel className="w-5 h-5 text-red-600" />
                 <h3 className={`font-bold text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>Section 94 BNSS 2023 Emergency Freeze Order</h3>
               </div>
-              <button onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer font-bold">✕</button>
+              <button 
+                onClick={() => { setActiveModal(null); setSelectedVaspForNotice(null); }} 
+                className="text-slate-400 hover:text-slate-600 cursor-pointer font-bold"
+              >
+                ✕
+              </button>
             </div>
 
             <div className={`p-4 rounded-xl text-xs font-mono space-y-2 leading-relaxed max-h-80 overflow-y-auto border ${
               darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
             }`}>
               <div className={`font-bold border-b pb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>FORMAL ASSET SEIZURE DIRECTIVE // CONFIDENTIAL</div>
-              <div>TO: Compliance Officer, {activeCase.caseInfo.targetVasp} ({activeCase.caseInfo.vaspComplianceEmail})</div>
+              <div>TO: Compliance Officer, {selectedVaspForNotice?.name || activeCase.caseInfo.targetVasp} ({selectedVaspForNotice?.email || activeCase.caseInfo.vaspComplianceEmail})</div>
               <div>FROM: {activeCase.caseInfo.officer}, {activeCase.caseInfo.station}</div>
               <div>CRIME REFERENCE: {activeCase.caseInfo.firNumber} | NCRP ID: {activeCase.caseInfo.ncrpId}</div>
               <div>STATUTORY TIME OF DIRECTIVE: {new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</div>
@@ -1443,18 +2542,24 @@ export default function App() {
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
-              <button onClick={() => setActiveModal(null)} className={`px-4 py-2 rounded-lg border text-xs font-semibold cursor-pointer ${
-                darkMode ? 'border-slate-700 text-slate-300' : 'border-slate-300 text-slate-700'
-              }`}>
+              <button 
+                onClick={() => { setActiveModal(null); setSelectedVaspForNotice(null); }} 
+                className={`px-4 py-2 rounded-lg border text-xs font-semibold cursor-pointer ${
+                  darkMode ? 'border-slate-700 text-slate-300' : 'border-slate-300 text-slate-700'
+                }`}
+              >
                 Cancel
               </button>
               <button 
                 onClick={() => {
+                  const targetName = selectedVaspForNotice?.name || activeCase.caseInfo.targetVasp;
+                  const targetEmail = selectedVaspForNotice?.email || activeCase.caseInfo.vaspComplianceEmail;
                   copyToClipboard(
-                    `SECTION 94 BNSS DIRECTIVE: Immediately debit-freeze ${activeCase.caseInfo.totalValueUsdt} traced from ${activeCase.nodes[1].address}. Case: ${activeCase.caseInfo.firNumber}`,
+                    `SECTION 94 BNSS DIRECTIVE: Immediately debit-freeze ${activeCase.caseInfo.totalValueUsdt} traced to ${targetName} (${targetEmail}) from ${activeCase.nodes[1].address}. Case: ${activeCase.caseInfo.firNumber}`,
                     'Legal Freeze Directive'
                   );
                   setActiveModal(null);
+                  setSelectedVaspForNotice(null);
                 }}
                 className="px-5 py-2.5 rounded-lg font-bold text-xs bg-red-600 hover:bg-red-700 text-white flex items-center gap-1.5 shadow-sm cursor-pointer"
               >
@@ -1536,6 +2641,173 @@ export default function App() {
                 Confirm Gateway Broadcast
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. REGISTER NEW NCRP COMPLAINT MODAL */}
+      {isRegisterModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className={`rounded-2xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl border ${
+            darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className={`flex items-center justify-between border-b pb-3 ${
+              darkMode ? 'border-slate-800' : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                <FolderLock className="w-5 h-5 text-blue-600" />
+                <h3 className={`font-bold text-base ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  Register New NCRP Citizen Complaint
+                </h3>
+              </div>
+              <button 
+                onClick={() => setIsRegisterModalOpen(false)} 
+                className="text-slate-400 hover:text-slate-600 cursor-pointer font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newCaseForm.suspectAddress.trim()) {
+                  showToast('Please enter suspect wallet address.');
+                  return;
+                }
+                const newCaseObj = {
+                  id: 'case-' + (vaultCases.length + 1),
+                  key: newCaseForm.network.toLowerCase() === 'tron' ? 'tron' : newCaseForm.network.toLowerCase() === 'bitcoin' ? 'bitcoin' : 'polygon',
+                  ncrpId: newCaseForm.ncrpId,
+                  firNumber: newCaseForm.firNumber,
+                  station: newCaseForm.station,
+                  state: newCaseForm.state,
+                  officer: newCaseForm.officer,
+                  timestamp: 'Just now (' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + ' IST)',
+                  crimeType: newCaseForm.crimeType,
+                  suspectAddress: newCaseForm.suspectAddress.trim(),
+                  network: newCaseForm.network,
+                  amountCrypto: newCaseForm.amountCrypto,
+                  amountInr: newCaseForm.amountInr,
+                  targetVasp: newCaseForm.targetVasp,
+                  vaspEmail: 'compliance@' + newCaseForm.targetVasp.toLowerCase().split(' ')[0] + '.com',
+                  riskLevel: newCaseForm.riskLevel,
+                  status: 'Active Investigation (Pending Freeze)',
+                  isActionable: true
+                };
+                setVaultCases([newCaseObj, ...vaultCases]);
+                setIsRegisterModalOpen(false);
+                showToast(`Complaint ${newCaseForm.ncrpId} registered to NCRP Vault!`);
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-500">NCRP Complaint ID</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCaseForm.ncrpId}
+                    onChange={(e) => setNewCaseForm({ ...newCaseForm, ncrpId: e.target.value })}
+                    className={`w-full p-2.5 rounded-lg border font-mono ${
+                      darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-500">FIR Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCaseForm.firNumber}
+                    onChange={(e) => setNewCaseForm({ ...newCaseForm, firNumber: e.target.value })}
+                    className={`w-full p-2.5 rounded-lg border font-mono ${
+                      darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1 text-slate-500">Suspect Wallet Address</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Paste suspect wallet address..."
+                  value={newCaseForm.suspectAddress}
+                  onChange={(e) => setNewCaseForm({ ...newCaseForm, suspectAddress: e.target.value })}
+                  className={`w-full p-2.5 rounded-lg border font-mono ${
+                    darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-500">Network</label>
+                  <select
+                    value={newCaseForm.network}
+                    onChange={(e) => setNewCaseForm({ ...newCaseForm, network: e.target.value })}
+                    className={`w-full p-2.5 rounded-lg border cursor-pointer ${
+                      darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
+                  >
+                    <option value="Polygon">Polygon</option>
+                    <option value="TRON">TRON</option>
+                    <option value="Bitcoin">Bitcoin</option>
+                    <option value="Ethereum">Ethereum</option>
+                    <option value="Solana">Solana</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-500">Amount (INR)</label>
+                  <input
+                    type="text"
+                    value={newCaseForm.amountInr}
+                    onChange={(e) => setNewCaseForm({ ...newCaseForm, amountInr: e.target.value })}
+                    className={`w-full p-2.5 rounded-lg border font-mono ${
+                      darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-500">State PS</label>
+                  <select
+                    value={newCaseForm.state}
+                    onChange={(e) => setNewCaseForm({ ...newCaseForm, state: e.target.value })}
+                    className={`w-full p-2.5 rounded-lg border cursor-pointer ${
+                      darkMode ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
+                  >
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Gujarat">Gujarat</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={`flex items-center justify-end gap-3 pt-3 border-t ${
+                darkMode ? 'border-slate-800' : 'border-slate-200'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterModalOpen(false)}
+                  className={`px-4 py-2 rounded-lg border cursor-pointer ${
+                    darkMode ? 'border-slate-700 text-slate-300' : 'border-slate-300 text-slate-700'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg font-bold bg-blue-700 hover:bg-blue-800 text-white cursor-pointer shadow-xs"
+                >
+                  Confirm & Ingest Case
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
