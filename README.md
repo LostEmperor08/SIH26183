@@ -1,147 +1,169 @@
-# Real-Time Crypto Fraud Attribution System
+# CHAKRAVYUH — Real-Time Crypto Fraud Attribution System
 
-**Smart India Hackathon / University Hackathon 2-Day Build Guide**  
-**Problem ID:** 26183  
-**Organization:** Ministry of Home Affairs / I4C (Indian Cyber Crime Coordination Centre)  
-**Track:** Blockchain & Cybersecurity  
+A Smart India Hackathon project (Problem ID **26183**) for cybercrime investigators to trace suspect crypto wallets, identify known exchange endpoints, and generate legal freeze notices.
 
----
+The repository contains:
+- A **Flask backend API** for wallet tracing and notice generation
+- A **React + Vite dashboard** (`fraud-dashboard/`) for investigator workflows
+- A **standalone static demo** (`index.html` / `preview.html`) that runs directly in the browser
 
-## 30-Second Elevator Pitch (For Hackathon Judges)
+## What it does
 
-> *"Cyber fraud victims report suspect cryptocurrency wallets to police portals like NCRP, but manually tracing those funds across the blockchain takes 2 to 4 hours per case—causing law enforcement to miss the critical window before illicit funds are cashed out to fiat. We built an automated, real-time blockchain attribution engine that traces victim-reported wallets forward through multi-hop laundering chains and identifies the receiving Exchange or VASP in under 30 seconds. By linking directly to exchange compliance desks with instant Section 91 CrPC asset freeze orders, we empower investigators to freeze fraudulent funds before criminals can withdraw them."*
+- Traces outgoing wallet transactions with a BFS-based multi-hop search (up to 2 hops in backend API)
+- Matches destination wallets against a curated exchange/VASP registry
+- Supports single-wallet and batch CSV investigation flows
+- Returns attribution metrics (found/unattributed counts, ETH/USD totals, exchange breakdown)
+- Generates a Section 91 Cr.P.C / Section 94 BNSS notice draft for attributed cases
+- Includes demo/fallback datasets so the UI can still demonstrate flows when live APIs are unavailable
 
----
+## Tech stack
 
-## Architecture Overview
+### Backend
+- Python 3
+- Flask + Flask-CORS
+- Requests
+- python-dotenv
+- Pandas
+- Gunicorn (deployment)
+- Pytest (tests)
 
+### Frontend
+- React
+- Vite
+- Tailwind CSS (via `@tailwindcss/vite`)
+- Axios
+- Recharts
+- Lucide React
+- Oxlint
+
+## Project structure
+
+```text
+.
+├── app/
+│   ├── models/exchanges.py            # Known exchange/VASP registry + network detection
+│   ├── routes/trace.py                # API endpoints
+│   └── services/
+│       ├── blockchain_tracer.py       # BFS tracing logic + USD estimation
+│       └── etherscan_client.py        # Live API fetch + mock fallback transactions
+├── data/sample_wallets.csv            # Sample batch input
+├── tests/
+│   ├── test_tracer.py                 # Unit/API tests
+│   └── verify_batch.py                # Batch endpoint verification script
+├── fraud-dashboard/                   # React dashboard
+├── API.md                             # Detailed endpoint examples
+├── main.py                            # Flask entrypoint
+├── Procfile                           # gunicorn startup command
+├── index.html                         # Standalone static demo
+└── preview.html                       # Standalone static demo backup
 ```
-[Victim Reports Suspect Wallet] 
-        │
-        ▼
-[Ingest via CSV Batch / Single Search]
-        │
-        ▼
-[Python / Flask Tracing Engine] ───► [Etherscan API / On-Chain Ledger]
-        │
-        ▼
-[BFS Multi-Hop Graph Traversal (1-2 Hops)]
-        │
-        ▼
-[Match Against Known VASP Hot/Cold Wallets (Binance, Coinbase, Kraken, OKX, etc.)]
-        │
-        ▼
-[Real-Time React Dashboard & I4C Asset Freeze Notice Generator]
-```
 
----
+## Prerequisites
 
-## MVP Features Implemented
+- Python 3.10+
+- Node.js 18+
+- npm
 
-1. **Wallet Ingestion Engine:**
-   - Single suspect wallet lookup with instant attribution.
-   - Batch CSV file upload handling 50+ wallets at once with pandas parsing.
-   - One-click **"Load Hackathon 5-Wallet Dataset"** button for instant demonstration.
+## Setup
 
-2. **Blockchain BFS Tracing Logic (1-2 Hops):**
-   - Validates Ethereum addresses.
-   - Traverses transaction graph forward through intermediary mule/mixer wallets.
-   - Matches recipient endpoints against clustered exchange addresses.
-   - Computes transferred volume in ETH and estimated USD fiat value.
+### 1) Backend setup
 
-3. **Resilient Dual-Mode API Client:**
-   - Live Etherscan Mainnet API integration with API key support.
-   - Intelligent cached graph fallback ensures **100% demo uptime** even if rate-limited or offline in front of judges.
-
-4. **Investigator Dashboard (React + Vite + Tailwind CSS):**
-   - **4 Key KPIs:** Suspect Wallets, Attributed to VASP (80% rate), Volume Traced (ETH), Asset Freeze Potential ($).
-   - **Interactive Multi-Hop Visualizer:** Displays `[Suspect Origin] -> [Intermediate Mule] -> [Target VASP]` with transaction hashes and amounts.
-   - **Evidence Ledger Table:** Sortable, filterable (Attributed vs In-Transit), with one-click full address copy and CSV report export.
-   - **I4C Legal Asset Freeze Notice:** Generates formal Section 91 CrPC freeze directive auto-addressed to the compliance officer of the identified exchange.
-
-5. **Standalone Zero-Dependency Preview:**
-   - Double-clickable `preview.html` that runs in any browser with zero setup required for emergency demo backup.
-
----
-
-## Quick Start Guide
-
-### Prerequisites
-- Python 3.11+
-- Node.js 18+ (LTS)
-
-### 1. Run Backend Intelligence Service (Flask)
 ```bash
-# Navigate to project root
-cd SIH-2026
+cd /home/runner/work/SIH26183/SIH26183
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+```
 
-# Activate virtual environment
-.\.venv\Scripts\activate
+Then edit `.env` with your own keys (do **not** commit real keys).
 
-# Run Flask backend on port 5000
+### 2) Frontend setup
+
+```bash
+cd /home/runner/work/SIH26183/SIH26183/fraud-dashboard
+npm install
+```
+
+## Environment variables
+
+Backend (`.env`, from `.env.example`):
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `ETHERSCAN_API_KEY` | Optional | Etherscan V2 API access for live EVM tracing |
+| `POLYGONSCAN_API_KEY` | Optional | Polygon API key (falls back to `ETHERSCAN_API_KEY` in code if unset) |
+| `TRONGRID_API_KEY` | Optional | TronGrid API access for TRC-20 fetches |
+| `PORT` | Optional | Backend port (default `5000`) |
+| `FLASK_DEBUG` | Optional | Flask debug mode toggle |
+
+Frontend (`fraud-dashboard/.env` if needed):
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `VITE_BACKEND_URL` | Optional | Base URL for backend API. If unset, requests use relative paths |
+
+## Run locally
+
+### Start backend
+
+```bash
+cd /home/runner/work/SIH26183/SIH26183
 python main.py
 ```
-Backend will be live at: `http://127.0.0.1:5000`  
-Health check endpoint: `http://127.0.0.1:5000/health`
 
-### 2. Run Unit & Integration Tests
+Backend default URL: `http://127.0.0.1:5000`
+
+### Start frontend dashboard
+
 ```bash
-# Run pytest suite
-python -m pytest tests/test_tracer.py -v
+cd /home/runner/work/SIH26183/SIH26183/fraud-dashboard
+npm run dev
+```
 
-# Run batch CSV processing verification test
+### Standalone demo mode
+
+Open either file directly in a browser:
+- `/home/runner/work/SIH26183/SIH26183/index.html`
+- `/home/runner/work/SIH26183/SIH26183/preview.html`
+
+## API quick reference
+
+- `GET /health`
+- `GET /api/exchanges`
+- `POST /api/trace`
+- `POST /api/batch-trace`
+- `POST /api/generate-notice`
+
+For full request/response samples, see [`API.md`](./API.md).
+
+## Testing
+
+From repository root:
+
+```bash
+python -m pytest tests/test_tracer.py -v
 python tests/verify_batch.py
 ```
 
-### 3. Run Frontend Dashboard (React + Vite)
-```bash
-cd fraud-dashboard
+## Deployment options present in this repo
 
-# Install dependencies (already installed in workspace)
-npm install
+### Backend
+- `Procfile` is configured for Gunicorn:
+  - `web: gunicorn main:app`
+- Suitable for platforms like Render/Heroku-style process deployment.
 
-# Start Vite dev server on port 3000
-npm run dev
-```
-Open `http://localhost:3000` in your browser.
+### Static Pages
+- `.github/workflows/pages.yml` deploys the repository root to **GitHub Pages** on pushes to `main`.
+- This workflow publishes static files (such as `index.html` / `preview.html`).
 
-### 4. Zero-Setup Instant Demo (Emergency Backup)
-Simply double-click `preview.html` to launch the complete interactive dashboard in Chrome/Edge without starting any servers!
+## Known limitations (current implementation)
 
----
+- Backend tracing depth is limited to 2 hops (`trace_to_exchange(..., max_hops=2)` usage in API routes).
+- Address validation in backend currently accepts EVM-style addresses, Tron-style prefixes, and test addresses.
+- Live tracing quality depends on third-party API availability/rate limits; mock/fallback data is used when live data is unavailable.
 
-## Sample Test Wallets (Hackathon Dataset)
+## Notes for contributors
 
-| Suspect Wallet Address | Incident Type | Attributed VASP | Hops | Value (ETH) | Est. USD |
-|---|---|---|:---:|:---:|:---:|
-| `0x1234567890123456789012345678901234567890` | Phishing Syndicate | **Binance 14** | 1 | 2.45 ETH | $6,370 |
-| `0x7d8bf3a7ea0145ade82aca353ad2b57a50e94c77` | Investment Ponzi | **Kraken 4** | 2 | 5.08 ETH | $13,208 |
-| `0x1f977c8c7b1a7ebf5047dcf45f2c3e6e2c5c1e8d` | Telegram Scam | **Coinbase Prime** | 1 | 10.00 ETH | $26,000 |
-| `0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef` | Ransomware | **OKX Hot Wallet** | 2 | 1.70 ETH | $4,420 |
-| `0x9999999999999999999999999999999999999999` | Inactive Mule | *In-Transit* | 0 | 0.00 ETH | $0 |
-
-**Results:** 4/5 wallets attributed to Tier-1 exchanges (80% detection rate, exceeding the 60% hackathon benchmark).
-
----
-
-## Cloud Deployment Guide
-
-### Backend Deploy (Render.com)
-1. Push repository to GitHub.
-2. Go to **Render.com** -> **New Web Service** -> Select GitHub repo.
-3. Set Build Command: `pip install -r requirements.txt`
-4. Set Start Command: `gunicorn main:app`
-5. (Optional) Set Environment Variable: `ETHERSCAN_API_KEY`
-
-### Frontend Deploy (Vercel)
-1. Go to **Vercel.com** -> **Add New Project** -> Select GitHub repo.
-2. Set Root Directory to: `fraud-dashboard`
-3. Set Environment Variable: `VITE_BACKEND_URL` to your Render backend URL.
-4. Click **Deploy**.
-
----
-
-## Production Roadmap (Post-Hackathon)
-- **Multi-Chain Expansion:** Support TRON (TRC-20 USDT - #1 fraud rail in India), Bitcoin (UTXO tracing), and Polygon.
-- **Law Enforcement Portal Integration:** Automated webhook push into NCRP and SAHYOG systems.
-- **AI Fraud Clustering:** Graph neural networks to identify peel chains, mixer hops, and common cash-out syndicates.
+- Keep secrets out of the repository (`.env` is ignored; `.env.example` is tracked).
+- If you update endpoints, also update `API.md`.
