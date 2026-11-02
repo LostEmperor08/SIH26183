@@ -1,147 +1,184 @@
-# Real-Time Crypto Fraud Attribution System
+# Chakravyuh SETU (Chakravyuh-SETU)
 
-**Smart India Hackathon / University Hackathon 2-Day Build Guide**  
-**Problem ID:** 26183  
-**Organization:** Ministry of Home Affairs / I4C (Indian Cyber Crime Coordination Centre)  
-**Track:** Blockchain & Cybersecurity  
+### Real-Time Identification of Fraud-Linked Cryptocurrency Exchanges from Victim-Reported Suspect Wallet Addresses through Automated Blockchain Analytics
 
----
-
-## 30-Second Elevator Pitch (For Hackathon Judges)
-
-> *"Cyber fraud victims report suspect cryptocurrency wallets to police portals like NCRP, but manually tracing those funds across the blockchain takes 2 to 4 hours per case—causing law enforcement to miss the critical window before illicit funds are cashed out to fiat. We built an automated, real-time blockchain attribution engine that traces victim-reported wallets forward through multi-hop laundering chains and identifies the receiving Exchange or VASP in under 30 seconds. By linking directly to exchange compliance desks with instant Section 91 CrPC asset freeze orders, we empower investigators to freeze fraudulent funds before criminals can withdraw them."*
+> **Smart India Hackathon (SIH) 2026 — Problem Statement 26183**
 
 ---
 
-## Architecture Overview
+## 🛡️ Executive Summary
 
+**Chakravyuh SETU** is an automated blockchain analytics, recursive fund attribution, and VASP (Virtual Asset Service Provider) intelligence platform engineered for law enforcement agencies and cyber-crime investigators.
+
+When a victim reports a cryptocurrency fraud incident to the National Cyber Crime Reporting Portal (NCRP), fraudsters attempt to obscure money trails by rapidly forwarding funds across multi-hop suspect wallets, splitting/merging balances, crossing multi-chain bridges, and finally depositing into cryptocurrency exchange wallets. 
+
+SETU solves this challenge by tracing blockchain fund flows in real time, recursively attributing victim funds, identifying target exchange endpoints with objective on-chain evidence, sealing investigation data in a cryptographic provenance ledger, and generating court-verifiable reports.
+
+---
+
+## 🎯 Primary Problem Addressed (SIH PS 26183)
+
+| Challenge | Legacy Approach | Chakravyuh SETU Solution |
+| :--- | :--- | :--- |
+| **Multi-Hop Obfuscation** | Manual 1-hop manual lookup on block explorers. | Automated recursive multi-hop tracing across 5 major blockchains (ETH, Polygon, BSC, Tron, BTC). |
+| **Fund Dilution & Splits** | Primitive percentage division creates false accounting. | Path-aware FIFO / Pro-Rata Recursive Fund Attribution Engine conserving value across splits/merges. |
+| **Cross-Chain Bridges** | Money trail lost when funds cross chains. | Automated bridge event extraction & cross-chain transfer correlation matching source/destination events. |
+| **Exchange Identification** | Unsubstantiated claims or manual subpoenas. | Deterministic VASP Directory & Cluster Intelligence matching deposit, hot, and cold wallet roles. |
+| **Metric Confusion** | Exchange deposits mislabeled as "high risk". | Decoupled Risk Score ($0-100$) vs. Case Relevance Score ($0-100\%$) vs. VASP Confidence ($0-0.99$). |
+| **Evidentiary Integrity** | Unsealed screenshots and spreadsheet logs. | Immutable Evidence Provenance Ledger with canonical JSON hashing & SHA-256 chain verification. |
+
+---
+
+## 🏗️ System Architecture & Workflow
+
+```text
+Victim Complaint / NCRP Report
+            │
+            ▼
+    [Reported Suspect Wallet]
+            │
+            ▼
+┌───────────────────────────────────────┐
+│     Multi-Chain Provider Engine      │ (EVM, TronGrid, Esplora)
+└───────────────────┬───────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────┐
+│  Recursive Fund Attribution Engine    │ (FIFO / Pro-Rata Multi-Hop)
+└───────────────────┬───────────────────┘
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+┌──────────────────┐ ┌──────────────────┐
+│ Bridge Correlation│ │ VASP Intelligence│
+└─────────┬────────┘ └─────────┬────────┘
+          │                   │
+          └─────────┬─────────┘
+                    ▼
+┌───────────────────────────────────────┐
+│     Risk & Behavior Engine + ML      │ (Modified Z-score & Decoupled Metrics)
+└───────────────────┬───────────────────┘
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+┌──────────────────┐ ┌──────────────────┐
+│Realtime Monitor  │ │Investigator UI   │
+└─────────┬────────┘ └─────────┬────────┘
+          │                   │
+          └─────────┬─────────┘
+                    ▼
+┌───────────────────────────────────────┐
+│    Evidence Provenance & Reports     │ (Canonical JSON & Report Hash Verification)
+└───────────────────────────────────────┘
 ```
-[Victim Reports Suspect Wallet] 
-        │
-        ▼
-[Ingest via CSV Batch / Single Search]
-        │
-        ▼
-[Python / Flask Tracing Engine] ───► [Etherscan API / On-Chain Ledger]
-        │
-        ▼
-[BFS Multi-Hop Graph Traversal (1-2 Hops)]
-        │
-        ▼
-[Match Against Known VASP Hot/Cold Wallets (Binance, Coinbase, Kraken, OKX, etc.)]
-        │
-        ▼
-[Real-Time React Dashboard & I4C Asset Freeze Notice Generator]
-```
 
 ---
 
-## MVP Features Implemented
+## ⚙️ Core Engines & Technological Foundation
 
-1. **Wallet Ingestion Engine:**
-   - Single suspect wallet lookup with instant attribution.
-   - Batch CSV file upload handling 50+ wallets at once with pandas parsing.
-   - One-click **"Load Hackathon 5-Wallet Dataset"** button for instant demonstration.
+### 1. Recursive Fund Attribution Engine (`app/services/fund_attribution.py`)
+- **Conservation of Value**: Attributed downstream funds are strictly bounded by the original victim loss pool.
+- **Asset Isolation**: Transfers across different asset pools (ETH, USDT, TRX, BTC) are tracked separately.
+- **Lineage Provenance**: Tracks exact path depth, quality level (`DIRECT`, `HIGH`, `MEDIUM`, `LOW`), and attribution method.
 
-2. **Blockchain BFS Tracing Logic (1-2 Hops):**
-   - Validates Ethereum addresses.
-   - Traverses transaction graph forward through intermediary mule/mixer wallets.
-   - Matches recipient endpoints against clustered exchange addresses.
-   - Computes transferred volume in ETH and estimated USD fiat value.
+### 2. VASP Exchange Intelligence Engine (`app/services/vasp_intelligence.py`)
+- **Role Classification**: Identifies exchange wallet roles (`DEPOSIT`, `HOT`, `COLD`).
+- **Bounded Confidence**: Calculates deterministic VASP confidence ($0.0 - 0.99$) based on explicit on-chain evidence.
 
-3. **Resilient Dual-Mode API Client:**
-   - Live Etherscan Mainnet API integration with API key support.
-   - Intelligent cached graph fallback ensures **100% demo uptime** even if rate-limited or offline in front of judges.
+### 3. Cross-Chain Bridge Correlation Engine (`app/services/bridge_correlation.py`)
+- **Bridge Support**: Automatically correlates transfers across Hop Protocol, Synapse, Stargate, Hyphen, Portal, and generic bridges.
+- **Sequence & Fee Matching**: Matches source deposit logs with destination mint/release logs within fee tolerances.
 
-4. **Investigator Dashboard (React + Vite + Tailwind CSS):**
-   - **4 Key KPIs:** Suspect Wallets, Attributed to VASP (80% rate), Volume Traced (ETH), Asset Freeze Potential ($).
-   - **Interactive Multi-Hop Visualizer:** Displays `[Suspect Origin] -> [Intermediate Mule] -> [Target VASP]` with transaction hashes and amounts.
-   - **Evidence Ledger Table:** Sortable, filterable (Attributed vs In-Transit), with one-click full address copy and CSV report export.
-   - **I4C Legal Asset Freeze Notice:** Generates formal Section 91 CrPC freeze directive auto-addressed to the compliance officer of the identified exchange.
+### 4. Risk & Behavioral Intelligence Engine (`app/services/risk.py`)
+- **Decoupled Analytical Metrics**: Separates Risk Score ($0-100$), Case Relevance ($0-100\%$), VASP Confidence ($0-0.99$), and ML Fraud Probability ($0-1.0$).
+- **Statistical Anomaly Detection**: Uses modified Z-score analysis to flag rapid forwarding and extreme transaction velocity.
 
-5. **Standalone Zero-Dependency Preview:**
-   - Double-clickable `preview.html` that runs in any browser with zero setup required for emergency demo backup.
+### 5. Real-Time Wallet Monitoring & Alert Engine (`app/services/monitoring.py`, `alert_engine.py`)
+- **Cursor State Recovery**: Restarts safely resume from persistent block cursors without missing events or creating duplicate alerts.
+- **Idempotency Protection**: Generates 32-character SHA-256 idempotency keys to deduplicate notification deliveries.
+
+### 6. Evidence Provenance & Cryptographic Ledger (`app/services/evidence_provenance.py`)
+- **Canonical Hashing**: `canonical_json()` ensures deterministic SHA-256 content hashing regardless of key ordering.
+- **Evidence Sealing**: Chain verification validates hash continuity (`INTACT` / `TAMPERED`).
+- **Zip Exporter**: Packages records, chain links, and `manifest.json` into exportable zip archives.
+
+### 7. Versioned Investigation Reports (`app/services/reports.py`)
+- **Server-Side Generation**: Produces versioned reports (`v1.0.0`) with HTML templates and PDF SHA-256 hash calculation.
+- **Preservation Notices**: Generates Section 91 CrPC preservation notice documents pre-populated with target exchange metadata.
 
 ---
 
-## Quick Start Guide
+## 🚀 Quickstart & Installation
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 18+ (LTS)
+- Python 3.10+
+- Node.js 18+ & npm
+- Supabase account or local Postgres instance
 
-### 1. Run Backend Intelligence Service (Flask)
+### 1. Backend Setup
 ```bash
-# Navigate to project root
-cd SIH-2026
-
-# Activate virtual environment
-.\.venv\Scripts\activate
-
-# Run Flask backend on port 5000
-python main.py
-```
-Backend will be live at: `http://127.0.0.1:5000`  
-Health check endpoint: `http://127.0.0.1:5000/health`
-
-### 2. Run Unit & Integration Tests
-```bash
-# Run pytest suite
-python -m pytest tests/test_tracer.py -v
-
-# Run batch CSV processing verification test
-python tests/verify_batch.py
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-### 3. Run Frontend Dashboard (React + Vite)
-```bash
-cd fraud-dashboard
+### 2. Configure Environment Variables
+Copy `.env.example` to `.env` in `backend/`:
+```env
+ENVIRONMENT=development
+PORT=8000
+SUPABASE_URL=https://your-supabase-url.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ETHERSCAN_API_KEY=your-etherscan-key
+```
 
-# Install dependencies (already installed in workspace)
+### 3. Run Backend Server & Verification
+```bash
+# Run FastAPI backend
+python -m uvicorn main:app --reload --port 8000
+
+# Run automated system verification script
+python ../scripts/verify_system.py
+```
+
+### 4. Frontend Setup & Build
+```bash
+cd ../frontend
 npm install
-
-# Start Vite dev server on port 3000
 npm run dev
+
+# Run production build check
+npx vite build
 ```
-Open `http://localhost:3000` in your browser.
-
-### 4. Zero-Setup Instant Demo (Emergency Backup)
-Simply double-click `preview.html` to launch the complete interactive dashboard in Chrome/Edge without starting any servers!
 
 ---
 
-## Sample Test Wallets (Hackathon Dataset)
+## 🧪 Testing & Quality Assurance
 
-| Suspect Wallet Address | Incident Type | Attributed VASP | Hops | Value (ETH) | Est. USD |
-|---|---|---|:---:|:---:|:---:|
-| `0x1234567890123456789012345678901234567890` | Phishing Syndicate | **Binance 14** | 1 | 2.45 ETH | $6,370 |
-| `0x7d8bf3a7ea0145ade82aca353ad2b57a50e94c77` | Investment Ponzi | **Kraken 4** | 2 | 5.08 ETH | $13,208 |
-| `0x1f977c8c7b1a7ebf5047dcf45f2c3e6e2c5c1e8d` | Telegram Scam | **Coinbase Prime** | 1 | 10.00 ETH | $26,000 |
-| `0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef` | Ransomware | **OKX Hot Wallet** | 2 | 1.70 ETH | $4,420 |
-| `0x9999999999999999999999999999999999999999` | Inactive Mule | *In-Transit* | 0 | 0.00 ETH | $0 |
+### Run Comprehensive Backend Pytest Suite
+All 252 backend unit and system integration tests run in under 7 seconds:
+```bash
+cd backend
+python -m pytest tests/
+```
 
-**Results:** 4/5 wallets attributed to Tier-1 exchanges (80% detection rate, exceeding the 60% hackathon benchmark).
-
----
-
-## Cloud Deployment Guide
-
-### Backend Deploy (Render.com)
-1. Push repository to GitHub.
-2. Go to **Render.com** -> **New Web Service** -> Select GitHub repo.
-3. Set Build Command: `pip install -r requirements.txt`
-4. Set Start Command: `gunicorn main:app`
-5. (Optional) Set Environment Variable: `ETHERSCAN_API_KEY`
-
-### Frontend Deploy (Vercel)
-1. Go to **Vercel.com** -> **Add New Project** -> Select GitHub repo.
-2. Set Root Directory to: `fraud-dashboard`
-3. Set Environment Variable: `VITE_BACKEND_URL` to your Render backend URL.
-4. Click **Deploy**.
+Test coverage includes:
+- `test_golden_investigation.py`: End-to-end golden investigation dataset scenario.
+- `test_system_integration.py`: 12 comprehensive integration tests covering end-to-end flows, IDOR security, provider resilience, and NCRP/SAHYOG simulation.
+- `test_data_consistency.py`: Numeric bounds, risk invariants, and multi-view data consistency checks.
 
 ---
 
-## Production Roadmap (Post-Hackathon)
-- **Multi-Chain Expansion:** Support TRON (TRC-20 USDT - #1 fraud rail in India), Bitcoin (UTXO tracing), and Polygon.
-- **Law Enforcement Portal Integration:** Automated webhook push into NCRP and SAHYOG systems.
-- **AI Fraud Clustering:** Graph neural networks to identify peel chains, mixer hops, and common cash-out syndicates.
+## ⚠️ Explicit Environment Status & Limitations
+
+1. **Government Portals (NCRP / SAHYOG)**: Outbound integration adapters operate in explicit **`SIMULATION`** mode unless live government credentials/endpoints are provided in environment configuration.
+2. **Provider Rate Limits**: Third-party RPC provider limits (e.g. free Etherscan tier) are managed by internal rate-limit pacing adapters. Live queries fall back to cached block intelligence when rate limited.
+3. **ML Scoring Model**: Operates with rule-based fallback when the standalone `aiml` Python service package is not mounted.
+
+---
+
+## 📜 License & Compliance
+
+Developed for **Smart India Hackathon 2026** (Problem Statement 26183). Reserved for official law enforcement and cyber-crime investigation evaluation.
